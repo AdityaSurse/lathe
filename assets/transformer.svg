@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 840" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#090d16" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+
+    <!-- Block Gradients -->
+    <linearGradient id="embGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+
+    <linearGradient id="attnGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8b5cf6" />
+      <stop offset="100%" stop-color="#6d28d9" />
+    </linearGradient>
+
+    <linearGradient id="normGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0ea5e9" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+
+    <linearGradient id="mlpGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ec4899" />
+      <stop offset="100%" stop-color="#be185d" />
+    </linearGradient>
+
+    <linearGradient id="headGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#38bdf8" />
+    </marker>
+
+    <marker id="skipArrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#f59e0b" />
+    </marker>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="860" height="840" rx="16" fill="url(#bgGrad)" stroke="#1e293b" stroke-width="2" />
+
+  <!-- Diagram Title -->
+  <text x="430" y="44" text-anchor="middle" font-family="ui-monospace, monospace" font-size="20" font-weight="800" fill="#f8fafc" letter-spacing="1">
+    DECODER-ONLY TRANSFORMER ARCHITECTURE
+  </text>
+  <text x="430" y="68" text-anchor="middle" font-family="ui-monospace, monospace" font-size="12" fill="#94a3b8">
+    Autoregressive LLM backbone used in Lathe local &amp; API models
+  </text>
+
+  <!-- Input Tokens & Embedding (Bottom) -->
+  <g transform="translate(250, 750)">
+    <rect x="0" y="0" width="360" height="48" rx="8" fill="url(#embGrad)" stroke="#60a5fa" stroke-width="1.5" />
+    <text x="180" y="22" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#ffffff">Input Tokens + RoPE Position Embeddings</text>
+    <text x="180" y="38" text-anchor="middle" font-family="ui-monospace, monospace" font-size="11" fill="#bfdbfe">Prompt Context: tokens x_1, x_2, ..., x_t</text>
+  </g>
+
+  <!-- Flow Arrow Up into Block -->
+  <line x1="430" y1="750" x2="430" y2="705" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#arrow)" />
+
+  <!-- N x Decoder Block Outer Frame -->
+  <rect x="180" y="240" width="500" height="460" rx="14" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="6,6" fill-opacity="0.8" />
+  <rect x="580" y="225" width="80" height="26" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1" />
+  <text x="620" y="242" text-anchor="middle" font-family="ui-monospace, monospace" font-size="12" font-weight="800" fill="#38bdf8">N × Layers</text>
+
+  <!-- INSIDE REPEATING BLOCK -->
+
+  <!-- Sub-layer 1: RMSNorm / Pre-Norm -->
+  <g transform="translate(260, 640)">
+    <rect x="0" y="0" width="340" height="40" rx="6" fill="url(#normGrad)" stroke="#38bdf8" stroke-width="1" />
+    <text x="170" y="25" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#ffffff">RMSNorm / Layer Normalization</text>
+  </g>
+
+  <line x1="430" y1="640" x2="430" y2="605" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)" />
+
+  <!-- Sub-layer 2: Masked Multi-Head Self-Attention (or GQA) -->
+  <g transform="translate(260, 545)">
+    <rect x="0" y="0" width="340" height="55" rx="8" fill="url(#attnGrad)" stroke="#c084fc" stroke-width="1.5" />
+    <text x="170" y="24" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#ffffff">Masked Multi-Head Attention (GQA)</text>
+    <text x="170" y="42" text-anchor="middle" font-family="ui-monospace, monospace" font-size="11" fill="#e9d5ff">Softmax( (Q · K^T)/√d + Mask ) · V + KV Cache</text>
+  </g>
+
+  <!-- Residual Skip Connection 1 (Around Attention) -->
+  <path d="M 260,660 L 210,660 L 210,480 L 255,480" fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#skipArrow)" />
+  <text x="165" y="570" font-family="ui-monospace, monospace" font-size="10" fill="#f59e0b" transform="rotate(-90 165,570)" text-anchor="middle">Residual Add</text>
+
+  <line x1="430" y1="545" x2="430" y2="505" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)" />
+
+  <!-- Add & Norm 1 -->
+  <g transform="translate(260, 465)">
+    <rect x="0" y="0" width="340" height="36" rx="6" fill="#1e293b" stroke="#64748b" stroke-width="1.5" />
+    <text x="170" y="23" text-anchor="middle" font-family="ui-monospace, monospace" font-size="12" font-weight="700" fill="#f1f5f9">⊕ Add &amp; RMSNorm</text>
+  </g>
+
+  <line x1="430" y1="465" x2="430" y2="425" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)" />
+
+  <!-- Sub-layer 3: Feed-Forward MLP (SwiGLU) -->
+  <g transform="translate(260, 365)">
+    <rect x="0" y="0" width="340" height="55" rx="8" fill="url(#mlpGrad)" stroke="#f472b6" stroke-width="1.5" />
+    <text x="170" y="24" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#ffffff">Feed-Forward Network (SwiGLU / MLP)</text>
+    <text x="170" y="42" text-anchor="middle" font-family="ui-monospace, monospace" font-size="11" fill="#fce7f3">Gate × Up projection → SiLU act → Down proj</text>
+  </g>
+
+  <!-- Residual Skip Connection 2 (Around MLP) -->
+  <path d="M 260,483 L 210,483 L 210,300 L 255,300" fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#skipArrow)" />
+  <text x="165" y="390" font-family="ui-monospace, monospace" font-size="10" fill="#f59e0b" transform="rotate(-90 165,390)" text-anchor="middle">Residual Add</text>
+
+  <line x1="430" y1="365" x2="430" y2="325" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)" />
+
+  <!-- Add & Norm 2 (Top of block) -->
+  <g transform="translate(260, 285)">
+    <rect x="0" y="0" width="340" height="36" rx="6" fill="#1e293b" stroke="#64748b" stroke-width="1.5" />
+    <text x="170" y="23" text-anchor="middle" font-family="ui-monospace, monospace" font-size="12" font-weight="700" fill="#f1f5f9">⊕ Add &amp; Final LayerNorm</text>
+  </g>
+
+  <!-- Out of Block Arrow -->
+  <line x1="430" y1="240" x2="430" y2="195" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#arrow)" />
+
+  <!-- Linear Head / LM Head -->
+  <g transform="translate(250, 150)">
+    <rect x="0" y="0" width="360" height="42" rx="8" fill="url(#headGrad)" stroke="#34d399" stroke-width="1.5" />
+    <text x="180" y="26" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#ffffff">Linear LM Head (Vocab Projection)</text>
+  </g>
+
+  <line x1="430" y1="150" x2="430" y2="125" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)" />
+
+  <!-- Next Token Output -->
+  <g transform="translate(300, 85)">
+    <rect x="0" y="0" width="260" height="36" rx="6" fill="#1e293b" stroke="#10b981" stroke-width="1.5" />
+    <text x="130" y="23" text-anchor="middle" font-family="ui-monospace, monospace" font-size="12" font-weight="800" fill="#34d399">Softmax → Next Token P(y_t+1)</text>
+  </g>
+</svg>

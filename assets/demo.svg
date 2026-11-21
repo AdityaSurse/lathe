@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" width="100%" height="100%">
+  <defs>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#000000" flood-opacity="0.6" />
+    </filter>
+  </defs>
+
+  <!-- Outer background glow -->
+  <rect width="960" height="620" fill="#090d16" rx="16" />
+
+  <!-- Terminal Window Container -->
+  <g transform="translate(30, 25)" filter="url(#shadow)">
+    <!-- Window Frame -->
+    <rect width="900" height="570" rx="12" fill="#0d1117" stroke="#30363d" stroke-width="1.5" />
+
+    <!-- Window Title Bar -->
+    <rect width="900" height="42" rx="12" fill="#161b22" />
+    <!-- Prevent rounded bottom on titlebar -->
+    <rect y="30" width="900" height="12" fill="#161b22" />
+    <line x1="0" y1="42" x2="900" y2="42" stroke="#30363d" stroke-width="1" />
+
+    <!-- Traffic Lights -->
+    <circle cx="24" cy="21" r="6" fill="#ff5f56" stroke="#e0443e" stroke-width="0.5" />
+    <circle cx="44" cy="21" r="6" fill="#ffbd2e" stroke="#dea123" stroke-width="0.5" />
+    <circle cx="64" cy="21" r="6" fill="#27c93f" stroke="#1aab29" stroke-width="0.5" />
+
+    <!-- Window Title -->
+    <text x="450" y="26" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13" fill="#8b949e" font-weight="500">lathe — agent session [qwen2.5-coder:7b-local + deepseek-r1:32b-hf]</text>
+
+    <!-- Terminal Content Area -->
+    <g transform="translate(24, 64)" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="13" line-height="1.5">
+
+      <!-- Command Prompt Line -->
+      <text x="0" y="16" fill="#58a6ff" font-weight="700">user@devbox<text fill="#8b949e">:</text><text fill="#7ee787">~/projects/api</text><text fill="#f0f6fc"> $ </text><text fill="#f0f6fc" font-weight="700">lathe "Add JWT bearer auth &amp; token rate limiter to auth/middleware.py"</text></text>
+
+      <!-- Router & Orchestrator output -->
+      <text x="0" y="44" fill="#8b949e">⚙ Router: Task classified as <tspan fill="#d2a8ff" font-weight="600">multi-step refactor</tspan> → Routing to <tspan fill="#38bdf8" font-weight="600">Planner (DeepSeek-R1-32B)</tspan></text>
+      <text x="0" y="66" fill="#8b949e">🔍 Workspace scanned: 42 files indexed (AST map: 1.2k tokens)</text>
+
+      <!-- Plan Box -->
+      <g transform="translate(0, 84)">
+        <rect width="852" height="116" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1" />
+        <text x="14" y="24" fill="#e6edf3" font-weight="700">📋 Orchestration Plan (4 steps):</text>
+        <text x="14" y="46" fill="#7ee787">  ✔ [1/4] Inspect auth/middleware.py and tests/test_auth.py</text>
+        <text x="14" y="66" fill="#7ee787">  ✔ [2/4] Create TokenBucket rate limiter in utils/limiter.py</text>
+        <text x="14" y="86" fill="#58a6ff" font-weight="600">  ❯ [3/4] Update auth/middleware.py: authenticate Bearer tokens &amp; apply bucket</text>
+        <text x="14" y="106" fill="#8b949e">    [4/4] Execute pytest tests/test_auth.py &amp; verify rate limit headers</text>
+      </g>
+
+      <!-- Coder + Diff Block -->
+      <text x="0" y="226" fill="#8b949e">🤖 <tspan fill="#7ee787" font-weight="600">Coder (Qwen2.5-Coder-7B)</tspan> generated diff for <tspan fill="#e6edf3" font-weight="600">auth/middleware.py</tspan>:</text>
+
+      <g transform="translate(0, 238)">
+        <!-- Diff Container -->
+        <rect width="852" height="136" rx="6" fill="#0b0e14" stroke="#30363d" stroke-width="1" />
+        <!-- Diff Header -->
+        <rect width="852" height="26" rx="6" fill="#161b22" />
+        <rect y="20" width="852" height="6" fill="#161b22" />
+        <text x="14" y="18" fill="#8b949e" font-size="12">--- a/auth/middleware.py  +++ b/auth/middleware.py (@@ -18,6 +18,8 @@)</text>
+
+        <!-- Diff Lines -->
+        <g transform="translate(14, 44)" font-size="12.5">
+          <text x="0" y="0" fill="#8b949e">      token = request.headers.get("Authorization")</text>
+          <!-- Minus line with red highlight -->
+          <rect x="-6" y="6" width="836" height="18" fill="#f85149" fill-opacity="0.18" />
+          <text x="0" y="20" fill="#ff7b72">-     if not token or not token.startswith("Token "):</text>
+          <!-- Plus line with green highlight -->
+          <rect x="-6" y="24" width="836" height="18" fill="#3fb950" fill-opacity="0.18" />
+          <text x="0" y="38" fill="#7ee787">+     if not token or not token.startswith("Bearer "):</text>
+          <rect x="-6" y="42" width="836" height="18" fill="#3fb950" fill-opacity="0.18" />
+          <text x="0" y="56" fill="#7ee787">+     client_ip = request.client.host</text>
+          <rect x="-6" y="60" width="836" height="18" fill="#3fb950" fill-opacity="0.18" />
+          <text x="0" y="74" fill="#7ee787">+     limiter.consume(client_ip, cost=1)</text>
+        </g>
+      </g>
+
+      <!-- Reviewer check -->
+      <text x="0" y="400" fill="#d2a8ff">🛡 Reviewer (DeepSeek-R1): Diff inspected — AST syntax valid, no security regressions detected.</text>
+
+      <!-- Safety / Permission Prompt Box -->
+      <g transform="translate(0, 420)">
+        <rect width="852" height="62" rx="6" fill="#1c1917" stroke="#f59e0b" stroke-width="1.5" />
+        <text x="14" y="25" fill="#fbbf24" font-weight="700">⚡ PERMISSION REQUIRED (Tool: write_file + run_tests)</text>
+        <text x="14" y="46" fill="#f0f6fc">
+          Apply patch to <tspan fill="#58a6ff" font-weight="600">auth/middleware.py</tspan> and run <tspan fill="#7ee787" font-weight="600">pytest</tspan>? <tspan fill="#f59e0b" font-weight="700">[y]es / [n]o / [a]lways allow for this session › </tspan><tspan fill="#38bdf8" font-weight="700">y</tspan><tspan fill="#38bdf8" class="cursor"> █</tspan>
+        </text>
+      </g>
+
+    </g>
+  </g>
+</svg>
