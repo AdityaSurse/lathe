@@ -15,7 +15,7 @@ Autonomous terminal coding agent combining open-source local LLMs, dual-model or
 
 ---
 
-## 🖥️ Terminal Experience
+## Terminal Interface
 
 <div align="center">
   <img src="assets/demo.svg" alt="Lathe Terminal Demo" width="100%" />
@@ -25,7 +25,7 @@ Interactive terminal interface with automated planning, structured diff generati
 
 ---
 
-## 🗺️ Feature Architecture Map
+## Feature Map
 
 ```mermaid
 mindmap
@@ -65,7 +65,7 @@ Complete feature landscape spanning autonomous orchestration, dual-model inferen
 
 ---
 
-## 🏗️ High-Level System Architecture
+## High-Level System Architecture
 
 ```mermaid
 flowchart LR
@@ -75,24 +75,24 @@ flowchart LR
     classDef toolStyle fill:#78350f,stroke:#fbbf24,stroke-width:2px,color:#f8fafc;
     classDef envStyle fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#f8fafc;
 
-    subgraph Entry ["🖥️ Client Entry"]
+    subgraph Entry ["Client Entry"]
         CLI["lathe CLI"]:::cliStyle
         Session["Session Manager"]:::cliStyle
     end
 
-    subgraph Engine ["🧠 Orchestration Engine"]
+    subgraph Engine ["Orchestration Engine"]
         Router{"Task Router"}:::coreStyle
         Planner["Planner / Reviewer"]:::coreStyle
         Coder["Coder Model"]:::coreStyle
     end
 
-    subgraph Backends ["🔌 LLM Providers"]
+    subgraph Backends ["LLM Providers"]
         Ollama["Ollama (Local GGUF)"]:::backendStyle
         HF["Hugging Face API"]:::backendStyle
         OpenAIComp["OpenAI-Compatible"]:::backendStyle
     end
 
-    subgraph Tools ["🧰 Tool Registry"]
+    subgraph Tools ["Tool Registry"]
         Files["File System"]:::toolStyle
         Edit["Diff & Patch"]:::toolStyle
         Shell["Terminal Shell"]:::toolStyle
@@ -101,7 +101,7 @@ flowchart LR
         Tests["Test Runner"]:::toolStyle
     end
 
-    Workspace[("📂 Project Workspace")]:::envStyle
+    Workspace[("Project Workspace")]:::envStyle
 
     CLI --> Session
     Session --> Router
@@ -118,7 +118,7 @@ Modular decoupling of user sessions, multi-model orchestration, provider backend
 
 ---
 
-## 🔄 Autonomous Agent Loop
+## Agent Loop
 
 ```mermaid
 flowchart TD
@@ -154,17 +154,17 @@ Closed-loop verification cycle enforcing dual-model review and automated test va
 
 ---
 
-## 🤝 Task Handoff Lifecycle
+## Task Handoff Lifecycle
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor User
-    participant Router as 🧭 Router
-    participant Planner as 📋 Planner
-    participant Coder as 💻 Coder
-    participant Reviewer as 🛡️ Reviewer
-    participant Tools as 🧰 Tools & Shell
+    participant Router as Router
+    participant Planner as Planner
+    participant Coder as Coder
+    participant Reviewer as Reviewer
+    participant Tools as Tools & Shell
 
     User->>Router: lathe "Add JWT bearer auth"
     Router->>Planner: Route complex refactor
@@ -185,7 +185,7 @@ Step-by-step collaboration between user authorization, specialized LLM roles, an
 
 ---
 
-## 🛡️ Permission & Safety State Machine
+## Permission & Safety System
 
 ```mermaid
 stateDiagram-v2
@@ -228,7 +228,7 @@ Multi-tiered authorization pipeline preventing destructive shell commands while 
 
 ---
 
-## 🧬 `lathe merge` Model Pipeline
+## `lathe merge` Pipeline
 
 ```mermaid
 flowchart LR
@@ -237,22 +237,22 @@ flowchart LR
     classDef quantStyle fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#f8fafc;
     classDef deployStyle fill:#78350f,stroke:#fbbf24,stroke-width:2px,color:#f8fafc;
 
-    subgraph HFModels ["🤗 Hugging Face Sources"]
+    subgraph HFModels ["Hugging Face Sources"]
         ModelA["Model A (HF Safetensors)"]:::hfStyle
         ModelB["Model B (HF Safetensors)"]:::hfStyle
     end
 
-    subgraph MergekitEngine ["⚙️ mergekit Engine"]
+    subgraph MergekitEngine ["mergekit Engine"]
         Config["mergekit YAML Config (SLERP / TIES)"]:::mergeStyle
         MergedFP16["Merged Model (16-bit Safetensors)"]:::mergeStyle
     end
 
-    subgraph LlamaCpp ["📦 Conversion & Quantization"]
+    subgraph LlamaCpp ["Conversion & Quantization"]
         Convert["llama.cpp convert-hf-to-gguf"]:::quantStyle
         Quantize["Quantize: Q4_K_M GGUF"]:::quantStyle
     end
 
-    subgraph LocalServe ["🚀 Ollama Runtime"]
+    subgraph LocalServe ["Ollama Runtime"]
         Modelfile["Ollama Modelfile Generation"]:::deployStyle
         OllamaLoad["ollama create & serve"]:::deployStyle
         LatheBench["lathe bench evaluation"]:::deployStyle
@@ -271,7 +271,7 @@ Automated pipeline merging weights from dual model checkpoints, converting to GG
 
 ---
 
-## ⚡ Decoder-Only Transformer Architecture
+## Decoder-Only Transformer Architecture
 
 <div align="center">
   <img src="assets/transformer.svg" alt="Decoder-Only Transformer Block" width="100%" />
@@ -281,7 +281,7 @@ Internal neural layer structure of autoregressive foundation models executing re
 
 ---
 
-## 📐 Weight Interpolation & Manifold Merging
+## Weight Interpolation & Manifold Merging
 
 <div align="center">
   <img src="assets/merge.svg" alt="Lathe Merge SLERP Interpolation" width="100%" />
@@ -291,7 +291,7 @@ Spherical linear interpolation (SLERP) computing geodesic weight trajectories be
 
 ---
 
-## 📊 Model Selection Trade-Offs
+## Model Selection Trade-offs
 
 ```mermaid
 quadrantChart
@@ -311,7 +311,7 @@ Qualitative balance between token throughput and code quality across local and c
 
 ---
 
-## 🍰 Context Window Target Budget
+## Context Window Budget
 
 ```mermaid
 pie title Target Context Window Budget
@@ -325,7 +325,7 @@ Recommended allocation preventing context starvation across file references, con
 
 ---
 
-## 📅 24-Phase Implementation Roadmap
+## Implementation Roadmap
 
 ```mermaid
 gantt
@@ -371,7 +371,7 @@ Structured five-stage release plan advancing from core primitives to advanced mu
 
 ---
 
-## 🌿 Phase Git Branching Strategy
+## Git Branching Strategy
 
 ```mermaid
 gitGraph
@@ -410,11 +410,11 @@ Isolated phase branches merging sequentially into main with end-to-end integrati
 
 ---
 
-## 🎛️ Reference Tables & Structure
+## Reference Tables & Structure
 
-### 💻 CLI Commands
+### CLI Commands
 
-| ⚡ Command | 📝 Purpose | 🔧 Key Options |
+| Command | Purpose | Key Options |
 |:---|:---|:---|
 | `lathe` | Start interactive agent terminal session | `--model`, `--planner`, `--router` |
 | `lathe "<prompt>"` | Run single prompt autonomously to completion | `--auto-approve`, `--max-steps 10` |
@@ -426,9 +426,9 @@ Isolated phase branches merging sequentially into main with end-to-end integrati
 
 CLI interface for interactive coding, non-interactive CI automation, model merging, and diagnostics.
 
-### ⌨️ In-Session Slash Commands
+### In-Session Slash Commands
 
-| 🪄 Command | 🎯 Action | 💡 Example |
+| Command | Action | Example |
 |:---|:---|:---|
 | `/help` | Display interactive command and tool reference | `/help tools` |
 | `/plan` | Show current multi-step execution checklist | `/plan` |
@@ -441,9 +441,9 @@ CLI interface for interactive coding, non-interactive CI automation, model mergi
 
 Interactive commands available during agent execution sessions.
 
-### ⚙️ Recommended Model Pairs by Hardware
+### Recommended Model Pairs by Hardware
 
-| 🖥️ Hardware Tier | 🧭 Router Model | 📋 Planner / Reviewer | 💻 Coder Model | 🚀 Backend Mode |
+| Hardware Tier | Router Model | Planner / Reviewer | Coder Model | Backend Mode |
 |:---|:---|:---|:---|:---|
 | **CPU Only (16GB RAM)** | `Qwen2.5-Coder-1.5B (Q4)` | `Qwen2.5-Coder-7B (Q4)` | `Qwen2.5-Coder-7B (Q4)` | Ollama Local |
 | **6–8GB GPU (RTX 3060/4060)** | `Qwen2.5-Coder-1.5B (Q4)` | `DeepSeek-R1-Distill-7B (Q4)` | `Qwen2.5-Coder-7B (Q4)` | Ollama Local |
@@ -453,7 +453,7 @@ Interactive commands available during agent execution sessions.
 
 Hardware-adapted configurations optimizing memory footprint, latency, and code accuracy.
 
-### 📁 Project Folder Layout
+### Project Folder Layout
 
 ```text
 lathe/
@@ -500,7 +500,7 @@ Codebase hierarchy separating multi-model intelligence, provider drivers, and sa
 
 ---
 
-## 🚀 Quickstart
+## Quickstart
 
 ```bash
 # 1. Install Lathe in your environment
@@ -519,7 +519,7 @@ Four simple steps to initialize your environment and launch an autonomous coding
 
 ---
 
-## 🤝 Contributing & License
+## Contributing & License
 
 <div align="center">
 
