@@ -1,3 +1,5 @@
+export PYTHONPATH := $(CURDIR)/src:$(PYTHONPATH)
+
 .PHONY: install lint test run
 
 install:
@@ -6,14 +8,14 @@ install:
 
 lint:
 	chflags -R nohidden .venv 2>/dev/null || true
-	uv run ruff check .
-	uv run ruff format --check .
-	uv run mypy src
+	uv run --no-sync ruff check .
+	uv run --no-sync ruff format --check .
+	uv run --no-sync mypy src
 
 test:
 	chflags -R nohidden .venv 2>/dev/null || true
-	uv run pytest tests/ -v
+	uv run --no-sync pytest tests/ -v
 
 run:
 	chflags -R nohidden .venv 2>/dev/null || true
-	uv run lathe doctor
+	uv run --no-sync lathe doctor

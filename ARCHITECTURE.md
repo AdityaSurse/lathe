@@ -20,7 +20,7 @@ The dual-LLM reasoning engine that decomposes high-level user tasks into sequent
 Unified provider abstraction layer handling prompt dispatch, streaming token generation, and response parsing. It abstracts local inference through Ollama (GGUF) and cloud inference via the Hugging Face Inference Providers API or OpenAI-compatible backends.
 
 ### `lathe.tools`
-A sandboxed tool registry providing the agent with filesystem operations, AST code search, unified diff application, test execution (`pytest`), and Git actions.
+The sandboxed tool framework and registry. It defines the abstract `Tool` base class with Pydantic argument schemas auto-converted to JSON Schema, risk level classification (`read`, `write`, `execute`, `network`), structured error feedback for LLM self-correction, and configurable output truncation. It provides the `@tool` decorator, `ToolRegistry`, and dual tool-calling protocols: native provider function calling and a fault-tolerant `<tool_call>` parser that handles messy model formatting (trailing commas, code fences, single quotes), selected dynamically from cached model capabilities.
 
 ### `lathe.context`
 Responsible for token budgeting and workspace awareness. It computes file embeddings, builds repository symbol maps, and strictly controls the 10/15/35/20/20 budget across system guidelines, AST maps, open files, dialogue, and tool logs.

@@ -7,6 +7,11 @@ from typing import Any
 
 import httpx
 import pytest
+from typer.testing import CliRunner
+
+from lathe.cli import app
+from lathe.config import LatheConfig, RoleConfig
+from lathe.llm.factory import get_client
 from lathe.models.capabilities import (
     get_capability,
     load_capabilities,
@@ -17,11 +22,6 @@ from lathe.models.probe import probe_model
 from lathe.models.pull import normalize_ollama_model_name, pull_model_stream
 from lathe.models.ram import format_bytes, get_available_ram_bytes
 from lathe.models.search import extract_quant, search_gguf_repos
-from typer.testing import CliRunner
-
-from lathe.cli import app
-from lathe.config import LatheConfig, RoleConfig
-from lathe.llm.factory import get_client
 
 runner = CliRunner()
 
