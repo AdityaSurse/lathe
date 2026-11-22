@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from lathe.llm.types import ToolSpec
 from lathe.tools.base import EchoTool, RiskLevel, Tool, ToolContext, ToolResult
+from lathe.tools.edit import edit_file
 from lathe.tools.files import glob, list_dir, read_file, write_file
 
 
@@ -87,3 +88,4 @@ default_registry.register(read_file)
 default_registry.register(list_dir)
 default_registry.register(glob)
 default_registry.register(write_file)
+default_registry.register(edit_file)

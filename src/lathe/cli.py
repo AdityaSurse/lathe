@@ -384,5 +384,66 @@ def ask(
     asyncio.run(_stream_ask(prompt, role, model_override=model))
 
 
+@app.command(name="tools")
+def tools_cmd(
+    name: str | None = typer.Argument(
+        None,
+        help="Optional tool name to inspect schema and parameters.",
+    ),
+) -> None:
+    """List available agent workspace tools or inspect a specific tool schema."""
+    import json
+
+    from rich.syntax import Syntax
+
+    from lathe.tools.registry import default_registry
+
+    if name:
+        tool_inst = default_registry.get(name)
+        if not tool_inst:
+            console.print(f"[red]No tool found named '{name}'.[/red]")
+            raise typer.Exit(code=1)
+
+        spec = tool_inst.to_tool_spec()
+        console.print(f"\n[bold cyan]Tool:[/bold cyan] [bold green]{spec.name}[/bold green]")
+        console.print(f"[bold cyan]Risk Level:[/bold cyan] {tool_inst.risk_level}")
+        console.print(f"\n[bold]Description:[/bold]\n{tool_inst.description}\n")
+        console.print("[bold]Parameters Schema:[/bold]")
+        schema_json = json.dumps(spec.parameters, indent=2)
+        console.print(Syntax(schema_json, "json", theme="monokai"))
+        return
+
+    table = Table(
+        title="Lathe Workspace Tools",
+        title_style="bold cyan",
+        border_style="bright_blue",
+        show_header=True,
+        header_style="bold white",
+    )
+    table.add_column("Tool", style="bold green", width=14)
+    table.add_column("Risk", width=10)
+    table.add_column("Description", width=55)
+
+    for t in default_registry.list_tools():
+        risk_color = (
+            "green" if t.risk_level == "read" else "yellow" if t.risk_level == "write" else "red"
+        )
+        summary = t.description.strip().split("\n")[0]
+        table.add_row(t.name, f"[{risk_color}]{t.risk_level}[/{risk_color}]", summary)
+
+    console.print(table)
+
+
+@app.command(name="tool")
+def tool_alias(
+    name: str | None = typer.Argument(
+        None,
+        help="Optional tool name to inspect schema and parameters.",
+    ),
+) -> None:
+    """Alias for 'lathe tools'."""
+    tools_cmd(name)
+
+
 if __name__ == "__main__":
     app()

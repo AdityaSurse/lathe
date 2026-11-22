@@ -24,3 +24,21 @@ def test_lathe_doctor() -> None:
     assert "Git" in result.stdout
     assert "Ollama Service" in result.stdout
     assert "HF_TOKEN" in result.stdout
+
+
+def test_lathe_tools_command() -> None:
+    """Verify that `lathe tools` and `lathe tool` display registered workspace tools."""
+    res_tools = runner.invoke(app, ["tools"])
+    assert res_tools.exit_code == 0
+    assert "Lathe Workspace Tools" in res_tools.stdout
+    assert "edit_file" in res_tools.stdout
+    assert "read_file" in res_tools.stdout
+
+    res_tool = runner.invoke(app, ["tool"])
+    assert res_tool.exit_code == 0
+    assert "Lathe Workspace Tools" in res_tool.stdout
+
+    res_inspect = runner.invoke(app, ["tools", "edit_file"])
+    assert res_inspect.exit_code == 0
+    assert "Tool: edit_file" in res_inspect.stdout
+    assert "Parameters Schema:" in res_inspect.stdout
