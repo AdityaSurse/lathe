@@ -131,7 +131,6 @@ def get_project_config_path(project_dir: Path | str | None = None) -> Path:
 
 def get_hf_token() -> str | None:
     """Retrieve Hugging Face token from environment variables or .env."""
-    load_dotenv()
     return os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN")
 
 
