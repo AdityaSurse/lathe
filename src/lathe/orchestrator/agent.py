@@ -72,6 +72,16 @@ class Agent:
 
         # Internal call history for loop detection: list of "tool_name:sorted_json_args"
         self._call_history: list[str] = []
+        self._edited_files: set[str] = set()
+
+    def _extract_mentioned_files(self, task: str) -> list[str]:
+        """Extract file paths explicitly referenced in task prompt (e.g. @file)."""
+        mentioned: list[str] = []
+        for match in re.findall(r"@([^\s,]+)", task):
+            mentioned.append(match.strip())
+        for match in re.findall(r"\b[\w\./\-]+\.(?:py|js|ts|tsx|go|rs|java|c|cpp|h)\b", task):
+            mentioned.append(match.strip())
+        return mentioned
 
     def _get_tool_context(self) -> ToolContext:
         """Construct a ToolContext with active safety and checkpoint bindings."""
@@ -81,6 +91,40 @@ class Agent:
             checkpoint_manager=self.checkpoint_manager,
         )
 
+    def _build_system_prompt(
+        self,
+        task: str,
+        tool_specs: list[ToolSpec],
+        protocol: str,
+    ) -> str:
+        """Construct system prompt enriched with fallback tool instructions and dynamic repomap."""
+        base_prompt = get_agent_system_prompt()
+        if protocol == "fallback":
+            fallback_instructions = build_fallback_system_prompt(tool_specs)
+            base_prompt = f"{base_prompt}\n\n{fallback_instructions}"
+
+        try:
+            from lathe.context.repomap import RepoMap
+
+            repomap_budget = getattr(self.config.settings, "repomap_token_budget", 2048)
+            rm = RepoMap(workspace_root=self.workspace_root, token_budget=repomap_budget)
+            mentioned = self._extract_mentioned_files(task)
+            repo_map_text = rm.get_repo_map(
+                task=task,
+                mentioned_files=mentioned,
+                edited_files=list(self._edited_files),
+            )
+            if repo_map_text:
+                header = (
+                    "Below is a map of the most relevant files and symbol "
+                    "signatures in this codebase:\n\n"
+                )
+                return f"{base_prompt}\n\n# Repository Map\n{header}{repo_map_text}"
+        except Exception:
+            pass
+
+        return base_prompt
+
     def _build_initial_messages(
         self,
         task: str,
@@ -88,13 +132,7 @@ class Agent:
         protocol: str,
     ) -> list[Message]:
         """Construct system prompt and initial user message."""
-        base_prompt = get_agent_system_prompt()
-        if protocol == "fallback":
-            fallback_instructions = build_fallback_system_prompt(tool_specs)
-            system_content = f"{base_prompt}\n\n{fallback_instructions}"
-        else:
-            system_content = base_prompt
-
+        system_content = self._build_system_prompt(task, tool_specs, protocol)
         return [
             Message(role="system", content=system_content),
             Message(role="user", content=task),
@@ -127,6 +165,12 @@ class Agent:
 
         while step_idx < self.max_steps:
             step_idx += 1
+
+            # Inject / refresh the repository map in the system prompt each turn
+            if conversation_messages and conversation_messages[0].role == "system":
+                conversation_messages[0].content = self._build_system_prompt(
+                    task, tool_specs, protocol
+                )
 
             # 1. Query LLM
             content_parts: list[str] = []
@@ -304,6 +348,11 @@ class Agent:
                 # Tool.run handles permissions and checkpoint snapshots internally
                 res = await tool_instance.run(call_item.arguments, ctx=ctx)
                 duration = (time.perf_counter() - t_start) * 1000.0
+
+                if res.ok and call_item.name in ("edit_file", "write_file"):
+                    edited_path = str(call_item.arguments.get("path", ""))
+                    if edited_path:
+                        self._edited_files.add(edited_path)
 
                 # Check if edit tool produced a unified diff
                 if call_item.name == "edit_file" and res.metadata.get("diff"):

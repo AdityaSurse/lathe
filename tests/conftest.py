@@ -7,12 +7,15 @@ from pathlib import Path
 import pytest
 
 # Specific directory names or top-level filenames that act as convenience aliases
-ALIAS_DIRS = {"git", "checkpoints", "checkpoint", "agent"}
+ALIAS_DIRS = {"git", "checkpoints", "checkpoint", "agent", "repomap"}
 ALIAS_ROOT_FILES = {
     "test_git.py",
     "test_checkpoints.py",
     "test_checkpoint.py",
     "test_agent.py",
+    "test_repomap.py",
+    "test_tools.py",
+    "test_safety.py",
 }
 
 
@@ -20,8 +23,9 @@ def pytest_ignore_collect(collection_path: Path, config: pytest.Config) -> bool 
     """Ignore alias test paths during general test runs to prevent duplicate test executions.
 
     If a user explicitly runs a targeted command like `pytest tests/git` or
-    `pytest tests/checkpoints`, the alias is collected and run.
-    Canonical paths under `tests/tools/` and `tests/safety/` are always collected.
+    `pytest tests/repomap` or `pytest tests/test_tools.py`, the alias is collected and run.
+    Canonical paths under `tests/tools/`, `tests/safety/`, and `tests/context/`
+    are always collected.
     """
     resolved_path = collection_path.resolve()
 
@@ -29,13 +33,13 @@ def pytest_ignore_collect(collection_path: Path, config: pytest.Config) -> bool 
     is_alias = False
     parts = collection_path.parts
 
-    # 1. Alias directories: tests/git, tests/checkpoints, tests/checkpoint
+    # 1. Alias directories: tests/git, tests/checkpoints, tests/checkpoint, tests/repomap, etc.
     for d in ALIAS_DIRS:
         if d in parts:
             is_alias = True
             break
 
-    # 2. Top-level test files that alias tools/safety: e.g. tests/test_git.py directly under tests/
+    # 2. Top-level test files that alias tools/safety/repomap
     if (
         not is_alias
         and collection_path.name in ALIAS_ROOT_FILES
@@ -50,9 +54,13 @@ def pytest_ignore_collect(collection_path: Path, config: pytest.Config) -> bool 
     # Inspect CLI arguments
     cli_args = [arg for arg in config.args if not arg.startswith("-")]
 
+    tests_root = (Path.cwd() / "tests").resolve()
     # Check if the user specifically targeted this alias in CLI args
     for arg in cli_args:
         arg_path = Path(arg).resolve()
+        # General run targets (whole tests folder or project root) should ignore aliases
+        if arg_path in (tests_root, Path.cwd()):
+            continue
         # Direct match or parent/child relationship
         if arg_path == resolved_path:
             return False

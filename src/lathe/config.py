@@ -96,6 +96,7 @@ class SettingsConfig(BaseModel):
 
     mode: Literal["single", "dual"] = "dual"
     max_agent_steps: int = Field(default=25, gt=0)
+    repomap_token_budget: int = Field(default=2048, gt=0)
     auto_approve_reads: bool = True
     blocked_commands: list[str] = Field(
         default_factory=lambda: [

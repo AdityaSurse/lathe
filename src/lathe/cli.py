@@ -93,6 +93,26 @@ def run_task(
     raise typer.Exit(0)
 
 
+@app.command(name="map")
+def map_cmd(
+    budget: int = typer.Option(
+        2048,
+        "--budget",
+        "-b",
+        help="Token budget limit for the repository map.",
+    ),
+) -> None:
+    """Print the repository symbol map and definition hierarchy."""
+    from lathe.context.repomap import RepoMap
+
+    rm = RepoMap(workspace_root=Path.cwd(), token_budget=budget)
+    map_text = rm.get_repo_map()
+    if map_text:
+        console.print(map_text)
+    else:
+        console.print("[dim]No symbols found or empty repository.[/dim]")
+
+
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
