@@ -10,6 +10,7 @@ from lathe.tools.base import EchoTool, RiskLevel, Tool, ToolContext, ToolResult
 from lathe.tools.edit import edit_file
 from lathe.tools.files import glob, list_dir, read_file, write_file
 from lathe.tools.git import git_commit, git_diff, git_log, git_status
+from lathe.tools.search import grep_search, semantic_search
 from lathe.tools.shell import run_shell
 
 
@@ -96,3 +97,5 @@ default_registry.register(git_status)
 default_registry.register(git_diff)
 default_registry.register(git_log)
 default_registry.register(git_commit)
+default_registry.register(grep_search)
+default_registry.register(semantic_search)

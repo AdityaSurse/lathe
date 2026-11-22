@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 # Specific directory names or top-level filenames that act as convenience aliases
-ALIAS_DIRS = {"git", "checkpoints", "checkpoint", "agent", "repomap"}
+ALIAS_DIRS = {"git", "checkpoints", "checkpoint", "agent", "repomap", "search"}
 ALIAS_ROOT_FILES = {
     "test_git.py",
     "test_checkpoints.py",
@@ -16,6 +16,8 @@ ALIAS_ROOT_FILES = {
     "test_repomap.py",
     "test_tools.py",
     "test_safety.py",
+    "test_search.py",
+    "test_index.py",
 }
 
 

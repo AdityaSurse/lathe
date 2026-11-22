@@ -110,11 +110,20 @@ class SettingsConfig(BaseModel):
     theme: str = "lathe-dark"
 
 
+class EmbeddingsConfig(BaseModel):
+    """Configuration for embedding model used in semantic code search."""
+
+    provider: Literal["ollama", "sentence-transformers", "hf"] = "ollama"
+    model: str = "nomic-embed-text"
+    base_url: str | None = None
+
+
 class LatheConfig(BaseModel):
     """Root configuration object merging settings and multi-model roles."""
 
     settings: SettingsConfig = Field(default_factory=SettingsConfig)
     roles: RolesConfig = Field(default_factory=RolesConfig)
+    embeddings: EmbeddingsConfig = Field(default_factory=EmbeddingsConfig)
 
     def get_reviewer(self) -> RoleConfig:
         """Shortcut to get the reviewer configuration."""

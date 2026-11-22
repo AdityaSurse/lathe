@@ -65,6 +65,12 @@ from lathe.tools.registry import (
     default_registry,
     tool,
 )
+from lathe.tools.search import (
+    GrepSearchArgs,
+    SemanticSearchArgs,
+    grep_search,
+    semantic_search,
+)
 from lathe.tools.shell import (
     RunShellArgs,
     ShellTool,
@@ -91,12 +97,14 @@ __all__ = [
     "GitStatusTool",
     "GlobArgs",
     "GlobTool",
+    "GrepSearchArgs",
     "ListDirArgs",
     "ListDirTool",
     "ReadFileArgs",
     "ReadFileTool",
     "RiskLevel",
     "RunShellArgs",
+    "SemanticSearchArgs",
     "ShellTool",
     "Tool",
     "ToolContext",
@@ -119,6 +127,7 @@ __all__ = [
     "git_log",
     "git_status",
     "glob",
+    "grep_search",
     "is_binary_file",
     "kill_process_group",
     "list_dir",
@@ -127,6 +136,7 @@ __all__ = [
     "read_file",
     "render_compact_tree",
     "run_shell",
+    "semantic_search",
     "tool",
     "truncate_output",
     "write_file",

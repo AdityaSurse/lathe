@@ -23,6 +23,7 @@ dependencies = [
     "prompt-toolkit>=3.0.0",
     "tree-sitter>=0.26.1",
     "tree-sitter-language-pack>=1.25.2",
+    "numpy>=2.4.6",
 ]
 
 [project.optional-dependencies]
