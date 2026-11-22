@@ -109,8 +109,9 @@ def run_repl(
     # Initialize checkpoint manager for active workspace
     checkpoint_mgr = get_checkpoint_manager(Path.cwd(), prompt_init=True)
 
-    # Instantiate Agent and attach rich terminal event UI
+    # Instantiate Agents and attach rich terminal event UI
     from lathe.orchestrator.agent import Agent
+    from lathe.orchestrator.dual import DualAgent
     from lathe.ui.agent_view import TerminalAgentUI
 
     agent = Agent(
@@ -120,8 +121,17 @@ def run_repl(
         workspace_root=Path.cwd(),
         console=console,
     )
+    dual_agent = DualAgent(
+        config=active_config,
+        permission_engine=permission_engine,
+        checkpoint_manager=checkpoint_mgr,
+        workspace_root=Path.cwd(),
+        console=console,
+        auto_approve=yolo,
+    )
     agent_ui = TerminalAgentUI(console=console)
     agent_ui.attach(agent.event_bus)
+    agent_ui.attach(dual_agent.event_bus)
 
     # Prepare history & completer
     history_path = get_history_file_path()
@@ -175,7 +185,11 @@ def run_repl(
         loop = asyncio.new_event_loop()
         try:
             asyncio.set_event_loop(loop)
-            task = loop.create_task(agent.run(line, messages=messages))
+            is_dual = getattr(active_config.settings, "mode", "single") == "dual"
+            if is_dual:
+                task = loop.create_task(dual_agent.run(line))
+            else:
+                task = loop.create_task(agent.run(line, messages=messages))
             loop.run_until_complete(task)
         except KeyboardInterrupt:
             console.print("\n[yellow]Generation cancelled (Ctrl+C).[/yellow]\n")

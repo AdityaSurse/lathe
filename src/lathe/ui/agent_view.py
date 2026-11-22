@@ -6,6 +6,7 @@ from typing import Any
 
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.table import Table
 
 from lathe.orchestrator.events import (
     AgentEvent,
@@ -14,6 +15,10 @@ from lathe.orchestrator.events import (
     EventBus,
     FinalAnswerEvent,
     NudgeEvent,
+    PlanCreatedEvent,
+    PlanRevisedEvent,
+    StepDoneEvent,
+    StepStartedEvent,
     ThinkingEvent,
     ToolEndEvent,
     ToolStartEvent,
@@ -128,6 +133,14 @@ class TerminalAgentUI:
             self._handle_halt(event)
         elif isinstance(event, FinalAnswerEvent):
             self._handle_final(event)
+        elif isinstance(event, PlanCreatedEvent):
+            self._handle_plan_created(event)
+        elif isinstance(event, StepStartedEvent):
+            self._handle_step_started(event)
+        elif isinstance(event, StepDoneEvent):
+            self._handle_step_done(event)
+        elif isinstance(event, PlanRevisedEvent):
+            self._handle_plan_revised(event)
 
     def _handle_thinking(self, event: ThinkingEvent) -> None:
         """Optionally display high-level thinking or reasoning if non-empty."""
@@ -191,3 +204,56 @@ class TerminalAgentUI:
         self.console.print()
         self.console.print(Markdown(event.content))
         self.console.print()
+
+    def _handle_plan_created(self, event: PlanCreatedEvent) -> None:
+        """Render created execution plan as a structured checklist table."""
+        table = Table(
+            title=f"Plan: {event.plan_goal}",
+            title_style="bold cyan",
+            border_style="bright_blue",
+            show_header=True,
+            header_style="bold white",
+        )
+        table.add_column("Step", style="bold green", width=6)
+        table.add_column("Title", style="bold white", width=28)
+        table.add_column("Files", style="dim", width=24)
+        table.add_column("Done When", style="dim", width=24)
+
+        for s in event.steps:
+            sid = str(s.get("id", ""))
+            stitle = str(s.get("title", ""))
+            files = s.get("files_to_change", []) or s.get("files_to_read", [])
+            files_str = ", ".join(files) if files else "-"
+            done_when = str(s.get("done_when", ""))
+            table.add_row(f"[{sid}]", stitle, files_str, done_when)
+
+        self.console.print()
+        self.console.print(table)
+        if event.risks:
+            self.console.print("[dim yellow]Risks:[/dim yellow] " + "; ".join(event.risks))
+        self.console.print()
+
+    def _handle_step_started(self, event: StepStartedEvent) -> None:
+        """Render step progress header: e.g. '[3/6] Add auth middleware'."""
+        header = f"[{event.step_number}/{event.total_steps}] {event.title}"
+        self.console.print(f"\n[bold cyan]─── {header} ───[/bold cyan]")
+        if event.instructions:
+            self.console.print(f"[dim]{event.instructions}[/dim]")
+
+    def _handle_step_done(self, event: StepDoneEvent) -> None:
+        """Render step completion status."""
+        status_sym = (
+            f"[bold {SUCCESS}]✓[/bold {SUCCESS}]"
+            if event.success
+            else f"[bold {ERROR}]✗[/bold {ERROR}]"
+        )
+        label = "completed" if event.success else "failed"
+        self.console.print(
+            f"  {status_sym} [bold]Step [{event.step_number}/{event.total_steps}] {label}[/bold]\n"
+        )
+
+    def _handle_plan_revised(self, event: PlanRevisedEvent) -> None:
+        """Render plan revision notice."""
+        steps_lbl = f"{event.total_steps} remaining steps"
+        tag = f"[bold {WARNING}]↻ Plan revised ({steps_lbl}):[/bold {WARNING}]"
+        self.console.print(f"\n{tag} [dim]{event.explanation}[/dim]\n")

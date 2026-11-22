@@ -42,7 +42,15 @@ class DefaultTaskGroup(TyperGroup):
         i = 0
         while i < len(args_list):
             a = args_list[i]
-            if a in ("--auto", "--yolo", "-v", "--version", "--help", "-h") or a.startswith("-"):
+            if a in (
+                "--auto",
+                "--yolo",
+                "--dual",
+                "-v",
+                "--version",
+                "--help",
+                "-h",
+            ) or a.startswith("-"):
                 i += 1
             else:
                 pos_idx = i
@@ -84,12 +92,22 @@ def run_task(
     task_words: list[str] = typer.Argument(..., help="Task prompt for one-shot agent execution."),
 ) -> None:
     """Execute a task in one-shot mode and exit."""
+    from lathe.config import load_config
     from lathe.orchestrator.agent import run_one_shot
+    from lathe.orchestrator.dual import run_dual_one_shot
 
     auto = ctx.obj.get("auto", False) if ctx.obj else False
     yolo = ctx.obj.get("yolo", False) if ctx.obj else False
+    dual = ctx.obj.get("dual", False) if ctx.obj else False
     task = " ".join(task_words)
-    run_one_shot(task, auto=auto, yolo=yolo)
+
+    active_cfg = load_config(require_secrets=False)
+    is_dual = dual or (getattr(active_cfg.settings, "mode", "single") == "dual")
+
+    if is_dual:
+        run_dual_one_shot(task, auto=auto, yolo=yolo)
+    else:
+        run_one_shot(task, auto=auto, yolo=yolo)
     raise typer.Exit(0)
 
 
@@ -216,11 +234,17 @@ def main(
         "--yolo",
         help="Approve all operations automatically (dangerous; blocklist still enforced).",
     ),
+    dual: bool = typer.Option(
+        False,
+        "--dual",
+        help="Run in dual mode (planner creates plan, coder executes each step).",
+    ),
 ) -> None:
     """Lathe terminal AI coding agent."""
     ctx.ensure_object(dict)
     ctx.obj["auto"] = auto
     ctx.obj["yolo"] = yolo
+    ctx.obj["dual"] = dual
 
     if yolo:
         from lathe.safety.permissions import PermissionEngine, PermissionMode
