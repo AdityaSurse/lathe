@@ -81,6 +81,48 @@ class AgentHaltEvent(BaseAgentEvent):
     total_steps: int = Field(default=0, description="Total steps completed prior to halt.")
 
 
+class PlanCreatedEvent(BaseAgentEvent):
+    """Emitted when the planner model produces a validated execution plan."""
+
+    plan_goal: str = Field(description="High-level goal of the plan.")
+    total_steps: int = Field(default=0, description="Number of planned execution steps.")
+    steps: list[dict[str, Any]] = Field(
+        default_factory=list, description="Serialized plan step dictionaries."
+    )
+    risks: list[str] = Field(default_factory=list, description="Identified execution risks.")
+
+
+class StepStartedEvent(BaseAgentEvent):
+    """Emitted when execution begins for a specific plan step."""
+
+    step_number: int = Field(description="1-based index of this step in the plan.")
+    total_steps: int = Field(description="Total number of steps in the active plan.")
+    title: str = Field(description="Short title of the step.")
+    instructions: str = Field(default="", description="Instructions for this step.")
+    files_to_read: list[str] = Field(default_factory=list, description="Target files to read.")
+    files_to_change: list[str] = Field(default_factory=list, description="Target files to modify.")
+
+
+class StepDoneEvent(BaseAgentEvent):
+    """Emitted when a plan step completes execution."""
+
+    step_number: int = Field(description="1-based index of the completed step.")
+    total_steps: int = Field(description="Total number of steps in the plan.")
+    title: str = Field(description="Short title of the completed step.")
+    result_summary: str = Field(default="", description="Summary of the step outcome.")
+    success: bool = Field(default=True, description="Whether the step completed successfully.")
+
+
+class PlanRevisedEvent(BaseAgentEvent):
+    """Emitted when the planner updates remaining steps after reviewing step execution."""
+
+    explanation: str = Field(description="Reasoning or description of plan modifications.")
+    total_steps: int = Field(description="Updated total count of steps.")
+    remaining_steps: list[dict[str, Any]] = Field(
+        default_factory=list, description="Updated remaining steps."
+    )
+
+
 # Union type representing any event emitted by the agent
 AgentEvent = (
     ThinkingEvent
@@ -90,6 +132,10 @@ AgentEvent = (
     | FinalAnswerEvent
     | NudgeEvent
     | AgentHaltEvent
+    | PlanCreatedEvent
+    | StepStartedEvent
+    | StepDoneEvent
+    | PlanRevisedEvent
 )
 
 EventListener = Callable[[AgentEvent], None | Coroutine[Any, Any, None]]

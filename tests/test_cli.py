@@ -56,3 +56,12 @@ def test_lathe_yolo_warning_cli() -> None:
     res = runner.invoke(app, ["--yolo", "tools"])
     assert res.exit_code == 0
     assert "WARNING: YOLO mode active" in res.stdout
+
+
+def test_lathe_dual_option_in_cli_help() -> None:
+    """Verify that --dual is listed in lathe CLI help."""
+    res = runner.invoke(app, ["--help"])
+    assert res.exit_code == 0
+    assert "--dual" in res.stdout
+    assert "--auto" in res.stdout
+    assert "--yolo" in res.stdout
