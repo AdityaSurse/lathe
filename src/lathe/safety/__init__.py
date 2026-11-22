@@ -1,6 +1,15 @@
-"""Safety and permission system enforcing whitelisting, confirmations, and security rules."""
+"""Safety system enforcing boundaries, whitelisting, confirmations, and security rules."""
 
 from enum import Enum
+
+from lathe.safety.workspace import (
+    DEFAULT_IGNORED_DIRS,
+    FileAccessError,
+    IgnoreRule,
+    PathEscapeError,
+    Workspace,
+    WorkspaceError,
+)
 
 
 class ActionPermission(Enum):
@@ -9,3 +18,14 @@ class ActionPermission(Enum):
     ALLOW = "allow"
     ASK = "ask"
     DENY = "deny"
+
+
+__all__ = [
+    "DEFAULT_IGNORED_DIRS",
+    "ActionPermission",
+    "FileAccessError",
+    "IgnoreRule",
+    "PathEscapeError",
+    "Workspace",
+    "WorkspaceError",
+]

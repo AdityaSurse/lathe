@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from lathe.llm.types import ToolSpec
 from lathe.tools.base import EchoTool, RiskLevel, Tool, ToolContext, ToolResult
+from lathe.tools.files import glob, list_dir, read_file, write_file
 
 
 class FunctionTool(Tool):
@@ -79,6 +80,10 @@ def tool(
     return decorator
 
 
-# Global default registry pre-seeded with EchoTool
+# Global default registry pre-seeded with built-in tools
 default_registry = ToolRegistry()
 default_registry.register(EchoTool())
+default_registry.register(read_file)
+default_registry.register(list_dir)
+default_registry.register(glob)
+default_registry.register(write_file)
