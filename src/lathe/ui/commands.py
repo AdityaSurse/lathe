@@ -2,6 +2,7 @@
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 from rich.console import Console
 from rich.table import Table
@@ -18,6 +19,20 @@ class SlashCommand:
     description: str
     usage: str
     handler: Callable[..., bool]  # Returns False to signal REPL exit
+
+
+_ACTIVE_MESSAGES: list[Any] = []
+
+
+def set_active_messages(messages: list[Any]) -> None:
+    """Set active conversation messages for slash commands inspection and compaction."""
+    global _ACTIVE_MESSAGES
+    _ACTIVE_MESSAGES = messages
+
+
+def get_active_messages() -> list[Any]:
+    """Retrieve active conversation messages."""
+    return _ACTIVE_MESSAGES
 
 
 class SlashCommandRegistry:
@@ -44,8 +59,12 @@ class SlashCommandRegistry:
         config: LatheConfig,
         stats: SessionStats,
         console: Console,
+        messages: list[Any] | None = None,
     ) -> bool:
         """Parse and execute a slash command line. Returns False if REPL should exit."""
+        if messages is not None:
+            set_active_messages(messages)
+
         parts = line.strip().split()
         if not parts:
             return True
@@ -185,7 +204,9 @@ def handle_tokens(
     stats: SessionStats,
     console: Console,
 ) -> bool:
-    """Display session token usage statistics."""
+    """Display session token usage statistics and colored budget bar chart."""
+    from lathe.context.budget import BudgetAllocator
+
     table = Table(
         title="Session Token Consumption",
         title_style="bold cyan",
@@ -200,6 +221,60 @@ def handle_tokens(
     table.add_row("Queries Executed", str(stats.request_count))
 
     console.print(table)
+
+    # Render category breakdown bar chart
+    coder_cfg = config.roles.coder
+    allocator = BudgetAllocator(
+        context_window=coder_cfg.context_window,
+        max_tokens=coder_cfg.max_tokens,
+        model_name=coder_cfg.model,
+    )
+    active_msgs = get_active_messages()
+    usage = allocator.calculate_usage(active_msgs)
+    allocator.render_budget_bar_chart(usage, console=console)
+    return True
+
+
+def handle_compact(
+    args: list[str],
+    config: LatheConfig,
+    stats: SessionStats,
+    console: Console,
+) -> bool:
+    """Force context compaction to free tokens within budget."""
+    from lathe.context.budget import BudgetAllocator, compact_context
+
+    active_msgs = get_active_messages()
+    if not active_msgs:
+        console.print("[dim]No active conversation messages to compact.[/dim]")
+        return True
+
+    coder_cfg = config.roles.coder
+    allocator = BudgetAllocator(
+        context_window=coder_cfg.context_window,
+        max_tokens=coder_cfg.max_tokens,
+        model_name=coder_cfg.model,
+    )
+
+    before_usage = allocator.calculate_usage(active_msgs)
+    compacted, did_compact, note = compact_context(active_msgs, allocator, force=True)
+
+    if did_compact:
+        active_msgs.clear()
+        active_msgs.extend(compacted)
+        after_usage = allocator.calculate_usage(active_msgs)
+        freed = max(0, before_usage.total_used - after_usage.total_used)
+        used_b = before_usage.total_used
+        used_a = after_usage.total_used
+        pct_a = after_usage.usage_ratio * 100
+        console.print(
+            f"[green]✓ Context compacted successfully:[/green] freed [bold]{freed:,}[/bold] tokens "
+            f"({used_b:,} → {used_a:,} tokens · {pct_a:.1f}% capacity).\n"
+            f"[dim]{note}[/dim]"
+        )
+    else:
+        console.print(f"[yellow]Compaction status:[/yellow] {note}")
+
     return True
 
 
@@ -388,6 +463,14 @@ registry.register(
         description="View token usage and statistics for current session",
         usage="/tokens",
         handler=handle_tokens,
+    )
+)
+registry.register(
+    SlashCommand(
+        name="/compact",
+        description="Force compaction of the conversation context to free token budget",
+        usage="/compact",
+        handler=handle_compact,
     )
 )
 registry.register(

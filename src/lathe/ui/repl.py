@@ -164,7 +164,9 @@ def run_repl(
 
         # Handle slash commands
         if line.startswith("/"):
-            should_continue = registry.execute(line, active_config, stats, console)
+            should_continue = registry.execute(
+                line, active_config, stats, console, messages=messages
+            )
             if not should_continue:
                 break
             continue

@@ -166,6 +166,27 @@ class Agent:
         while step_idx < self.max_steps:
             step_idx += 1
 
+            # Check context token usage and auto-compact if usage exceeds 75%
+            try:
+                from lathe.context.budget import BudgetAllocator, compact_context
+
+                coder_cfg = self.config.roles.coder
+                allocator = BudgetAllocator(
+                    context_window=coder_cfg.context_window,
+                    max_tokens=coder_cfg.max_tokens,
+                    model_name=coder_cfg.model,
+                )
+                compacted_msgs, was_compacted, _ = compact_context(
+                    conversation_messages,
+                    allocator,
+                    force=False,
+                )
+                if was_compacted:
+                    conversation_messages.clear()
+                    conversation_messages.extend(compacted_msgs)
+            except Exception:
+                pass
+
             # Inject / refresh the repository map in the system prompt each turn
             if conversation_messages and conversation_messages[0].role == "system":
                 conversation_messages[0].content = self._build_system_prompt(

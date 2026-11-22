@@ -1,5 +1,13 @@
-"""Context management module for token counting, AST indexing, repomap, and semantic search."""
+"""Context management: token counting, AST indexing, repomap, budget, and compaction."""
 
+from lathe.context.budget import (
+    BudgetAllocator,
+    BudgetShares,
+    BudgetUsage,
+    TokenCounter,
+    compact_context,
+    is_protected_message,
+)
 from lathe.context.index import (
     BaseEmbedder,
     CodeChunk,
@@ -16,6 +24,9 @@ from lathe.context.repomap import FileSymbols, RepoMap, SymbolDef
 
 __all__ = [
     "BaseEmbedder",
+    "BudgetAllocator",
+    "BudgetShares",
+    "BudgetUsage",
     "CodeChunk",
     "CodeIndex",
     "DeterministicEmbedder",
@@ -26,6 +37,9 @@ __all__ = [
     "SearchResult",
     "SentenceTransformersEmbedder",
     "SymbolDef",
+    "TokenCounter",
     "chunk_file",
+    "compact_context",
     "create_embedder",
+    "is_protected_message",
 ]
