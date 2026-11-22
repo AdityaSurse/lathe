@@ -9,9 +9,11 @@ from prompt_toolkit.document import Document
 SLASH_COMMAND_HINTS = [
     ("/help", "Show list of available slash commands"),
     ("/model", "Switch active model: /model <role> <id>"),
-    ("/mode", "Switch mode: /mode single|dual"),
+    ("/mode", "Switch mode: /mode single|dual|auto"),
     ("/clear", "Clear the terminal screen"),
     ("/tokens", "View session token usage statistics"),
+    ("/stats", "Show per-role model call metrics, latency, and tokens/sec"),
+    ("/compact", "Force compaction of conversation context"),
     ("/exit", "Exit Lathe REPL session"),
     ("/undo", "Restore the last checkpoint taken"),
     ("/checkpoints", "List all session checkpoints"),

@@ -94,7 +94,7 @@ class RolesConfig(BaseModel):
 class SettingsConfig(BaseModel):
     """General runtime and execution settings for Lathe."""
 
-    mode: Literal["single", "dual"] = "dual"
+    mode: Literal["single", "dual", "auto"] = "auto"
     max_agent_steps: int = Field(default=25, gt=0)
     repomap_token_budget: int = Field(default=2048, gt=0)
     auto_approve_reads: bool = True

@@ -1,5 +1,5 @@
 [settings]
-mode = "single"
+mode = "auto"
 max_agent_steps = 10
 auto_approve_reads = true
 theme = "lathe-dark"

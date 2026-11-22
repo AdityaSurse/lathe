@@ -41,7 +41,7 @@ def test_default_config() -> None:
     assert cfg.get_reviewer().model == cfg.roles.planner.model
 
     # Settings
-    assert cfg.settings.mode == "dual"
+    assert cfg.settings.mode in ("auto", "dual")
     assert cfg.settings.max_agent_steps in (10, 25)
     assert cfg.settings.auto_approve_reads is True
     assert "rm -rf /" in cfg.settings.blocked_commands
