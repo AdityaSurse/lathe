@@ -40,11 +40,14 @@ from lathe.orchestrator.events import (
     PlanCreatedEvent,
     PlanRevisedEvent,
     StepDoneEvent,
+    StepReviewedEvent,
     StepStartedEvent,
 )
+from lathe.orchestrator.review import ReviewIssue, ReviewVerdict, StepReviewer
 from lathe.safety.checkpoints import CheckpointManager, get_checkpoint_manager
 from lathe.safety.permissions import PermissionEngine, PermissionMode
 from lathe.tools.registry import ToolRegistry, default_registry
+from lathe.tools.tests import run_tests_helper
 
 
 class PlanStep(BaseModel):
@@ -213,6 +216,7 @@ class DualAgent:
         config: LatheConfig | None = None,
         planner_client: LLMClient | None = None,
         coder_client: LLMClient | None = None,
+        reviewer_client: LLMClient | None = None,
         tools: ToolRegistry | None = None,
         permission_engine: PermissionEngine | None = None,
         checkpoint_manager: CheckpointManager | None = None,
@@ -221,6 +225,8 @@ class DualAgent:
         console: Console | None = None,
         auto_approve: bool = False,
         approval_callback: Callable[[Plan], str | Plan] | None = None,
+        review_choice_callback: Callable[[ReviewVerdict], str] | None = None,
+        enable_review: bool = True,
     ) -> None:
         self.config = config or load_config(require_secrets=False)
         self.workspace_root = workspace_root or Path.cwd()
@@ -231,8 +237,10 @@ class DualAgent:
         self.checkpoint_manager = checkpoint_manager
         self.auto_approve = auto_approve
         self.approval_callback = approval_callback
+        self.review_choice_callback = review_choice_callback
+        self.enable_review = enable_review
 
-        # Initialize planner and coder clients
+        # Initialize planner, coder, and reviewer clients
         if planner_client is not None:
             self.planner_client = planner_client
         else:
@@ -242,6 +250,11 @@ class DualAgent:
             self.coder_client = coder_client
         else:
             self.coder_client = get_client("coder", config=self.config)
+
+        if reviewer_client is not None:
+            self.reviewer_client = reviewer_client
+        else:
+            self.reviewer_client = get_client("reviewer", config=self.config)
 
     def _get_repo_map(self, task: str) -> str:
         """Extract repository map signatures for the planner prompt."""
@@ -395,6 +408,44 @@ class DualAgent:
                     if temp_path.exists():
                         temp_path.unlink()
 
+    def _handle_failed_review_choice(
+        self, verdict: ReviewVerdict, checkpoint_num: int | None
+    ) -> str:
+        """Prompt user when a step fails review after 2 retries: keep, undo, or take over."""
+        if self.review_choice_callback is not None:
+            ans = str(self.review_choice_callback(verdict)).strip().lower()
+            if ans in ("k", "keep"):
+                return "keep"
+            if ans in ("u", "undo"):
+                return "undo"
+            if ans in ("t", "take_over", "takeover"):
+                return "take_over"
+
+        if self.auto_approve or not sys.stdin.isatty():
+            return "keep"
+
+        self.console.print(
+            "\n[bold red]Review did not pass after 2 retries.[/bold red]\n"
+            "Options:\n"
+            "  [bold cyan][k]eep[/bold cyan]      - Keep current changes and continue plan\n"
+            "  [bold yellow][u]ndo[/bold yellow]      - Restore checkpoint before step and stop\n"
+            "  [bold magenta][t]ake over[/bold magenta] - Halt agent to inspect manually\n"
+        )
+        try:
+            choice = (
+                self.console.input("[bold cyan]Action: [k]eep / [u]ndo / [t]ake over: [/bold cyan]")
+                .strip()
+                .lower()
+            )
+        except (EOFError, KeyboardInterrupt):
+            return "undo"
+
+        if choice in ("u", "undo"):
+            return "undo"
+        if choice in ("t", "take_over", "takeover"):
+            return "take_over"
+        return "keep"
+
     async def _review_and_revise_remaining(
         self,
         completed_step: PlanStep,
@@ -475,7 +526,7 @@ class DualAgent:
         previous_summaries: list[str] = []
         current_step_idx = 0
 
-        # 3. Step-by-step Coder execution with focused context
+        # 3. Step-by-step Coder execution with focused context and reviewer feedback
         while current_step_idx < len(plan.steps):
             step = plan.steps[current_step_idx]
             step.status = "in_progress"
@@ -493,62 +544,177 @@ class DualAgent:
                 )
             )
 
-            # Build focused context for the coder
-            prompt_sections = [
-                f"# Current Plan Step: [{current_step_idx + 1}/{len(plan.steps)}] {step.title}",
-                "",
-                "## Instructions",
-                step.instructions,
-                "",
-            ]
-            if step.files_to_read:
-                prompt_sections.append(
-                    "## Files to Read\n" + "\n".join(f"- @{f}" for f in step.files_to_read)
+            # Snapshot working tree before step execution for rollback capability
+            step_checkpoint_num: int | None = None
+            if self.checkpoint_manager and self.checkpoint_manager.is_enabled:
+                ckpt = self.checkpoint_manager.create_checkpoint(
+                    f"Before step {step.id}: {step.title}"
                 )
-            if step.files_to_change:
-                prompt_sections.append(
-                    "## Files to Change\n" + "\n".join(f"- @{f}" for f in step.files_to_change)
-                )
-            prompt_sections.extend(
-                [
+                if ckpt:
+                    step_checkpoint_num = ckpt.number
+
+            retry_count = 0
+            max_retries = 2
+            review_issues: list[ReviewIssue] = []
+            step_result: str = ""
+
+            while True:
+                # Build focused context for the coder
+                prompt_sections = [
+                    f"# Current Plan Step: [{current_step_idx + 1}/{len(plan.steps)}] {step.title}",
                     "",
-                    f"## Done When\n{step.done_when}",
+                    "## Instructions",
+                    step.instructions,
+                    "",
                 ]
-            )
-            if previous_summaries:
+                if step.files_to_read:
+                    prompt_sections.append(
+                        "## Files to Read\n" + "\n".join(f"- @{f}" for f in step.files_to_read)
+                    )
+                if step.files_to_change:
+                    prompt_sections.append(
+                        "## Files to Change\n" + "\n".join(f"- @{f}" for f in step.files_to_change)
+                    )
                 prompt_sections.extend(
                     [
                         "",
-                        "## Previous Steps Summary",
-                        "\n".join(f"- {s}" for s in previous_summaries),
+                        f"## Done When\n{step.done_when}",
                     ]
                 )
+                if previous_summaries:
+                    prompt_sections.extend(
+                        [
+                            "",
+                            "## Previous Steps Summary",
+                            "\n".join(f"- {s}" for s in previous_summaries),
+                        ]
+                    )
+                if review_issues:
+                    prompt_sections.extend(
+                        [
+                            "",
+                            "## Review Feedback (Revisions Required)",
+                            "The reviewer requested the following revisions:",
+                        ]
+                    )
+                    for iss in review_issues:
+                        loc = f"{iss.file}:{iss.line}" if iss.line else iss.file
+                        prompt_sections.append(f"- **{loc}**: {iss.problem}")
+                        if iss.suggestion:
+                            prompt_sections.append(f"  Suggestion: {iss.suggestion}")
+                    prompt_sections.append(
+                        "Please address all issues above and verify changes satisfy the criteria."
+                    )
 
-            step_task = "\n".join(prompt_sections)
+                step_task = "\n".join(prompt_sections)
 
-            # Forward tool and thinking events from step_agent while suppressing intermediate
-            # FinalAnswerEvents (which are represented by StepDoneEvent).
-            step_bus = EventBus()
+                # Forward tool and thinking events from step_agent while suppressing intermediate
+                # FinalAnswerEvents (which are represented by StepDoneEvent).
+                step_bus = EventBus()
 
-            async def _forward_step_event(evt: Any) -> None:
-                if not isinstance(evt, FinalAnswerEvent):
-                    await self.event_bus.emit(evt)
+                async def _forward_step_event(evt: Any) -> None:
+                    if not isinstance(evt, FinalAnswerEvent):
+                        await self.event_bus.emit(evt)
 
-            step_bus.subscribe(_forward_step_event)
+                step_bus.subscribe(_forward_step_event)
 
-            # Instantiate focused agent loop for this step
-            step_agent = Agent(
-                config=self.config,
-                client=self.coder_client,
-                tools=self.tools,
-                permission_engine=self.permission_engine,
-                checkpoint_manager=self.checkpoint_manager,
-                workspace_root=self.workspace_root,
-                event_bus=step_bus,
-                console=self.console,
-            )
+                # Instantiate focused agent loop for this step
+                step_agent = Agent(
+                    config=self.config,
+                    client=self.coder_client,
+                    tools=self.tools,
+                    permission_engine=self.permission_engine,
+                    checkpoint_manager=self.checkpoint_manager,
+                    workspace_root=self.workspace_root,
+                    event_bus=step_bus,
+                    console=self.console,
+                )
 
-            step_result = await step_agent.run(step_task)
+                step_result = await step_agent.run(step_task)
+
+                # Step Review step
+                if not self.enable_review:
+                    break
+
+                test_results = run_tests_helper(self.workspace_root, self.config)
+
+                step_diff = ""
+                if self.checkpoint_manager and self.checkpoint_manager.is_enabled:
+                    step_diff = self.checkpoint_manager.get_session_diff()
+                if not step_diff:
+                    try:
+                        diff_proc = subprocess.run(
+                            ["git", "diff", "HEAD"],
+                            cwd=str(self.workspace_root),
+                            capture_output=True,
+                            text=True,
+                        )
+                        if diff_proc.returncode == 0:
+                            step_diff = diff_proc.stdout
+                    except Exception:
+                        pass
+
+                reviewer = StepReviewer(config=self.config, client=self.reviewer_client)
+                verdict = await reviewer.review_step(
+                    step_title=step.title,
+                    step_instructions=step.instructions,
+                    done_when=step.done_when,
+                    diff=step_diff,
+                    test_results=test_results,
+                )
+
+                await self.event_bus.emit(
+                    StepReviewedEvent(
+                        step_number=current_step_idx + 1,
+                        step_title=step.title,
+                        verdict=verdict.verdict,
+                        summary=verdict.summary,
+                        issues=[iss.model_dump() for iss in verdict.issues],
+                        step_index=current_step_idx + 1,
+                    )
+                )
+
+                if verdict.verdict == "approve":
+                    break
+
+                if retry_count < max_retries:
+                    retry_count += 1
+                    review_issues = verdict.issues
+                    self.console.print(
+                        f"\n[bold yellow]↻ Retrying step [{current_step_idx + 1}] "
+                        f"(retry {retry_count}/{max_retries}) with feedback...[/bold yellow]\n"
+                    )
+                    continue
+
+                # Exceeded max 2 retries -> prompt user
+                user_choice = self._handle_failed_review_choice(verdict, step_checkpoint_num)
+                if user_choice == "undo":
+                    if self.checkpoint_manager and step_checkpoint_num is not None:
+                        self.checkpoint_manager.restore(step_checkpoint_num)
+                    halt_msg = f"Step [{current_step_idx + 1}] undone after failed review retries."
+                    await self.event_bus.emit(
+                        AgentHaltEvent(reason=halt_msg, total_steps=current_step_idx)
+                    )
+                    await self.event_bus.emit(
+                        FinalAnswerEvent(content=halt_msg, total_steps=current_step_idx)
+                    )
+                    return halt_msg
+                elif user_choice == "take_over":
+                    halt_msg = (
+                        f"Execution halted: user took over after step "
+                        f"[{current_step_idx + 1}] review failures."
+                    )
+                    await self.event_bus.emit(
+                        AgentHaltEvent(reason=halt_msg, total_steps=current_step_idx)
+                    )
+                    await self.event_bus.emit(
+                        FinalAnswerEvent(content=halt_msg, total_steps=current_step_idx)
+                    )
+                    return halt_msg
+                else:
+                    # 'keep'
+                    break
+
             step.status = "completed"
             step.summary = step_result
 

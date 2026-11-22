@@ -108,6 +108,13 @@ class SettingsConfig(BaseModel):
         ]
     )
     theme: str = "lathe-dark"
+    self_check: bool = False
+
+
+class ProjectConfig(BaseModel):
+    """Project-specific settings such as custom test command."""
+
+    test_command: str | None = None
 
 
 class EmbeddingsConfig(BaseModel):
@@ -124,6 +131,7 @@ class LatheConfig(BaseModel):
     settings: SettingsConfig = Field(default_factory=SettingsConfig)
     roles: RolesConfig = Field(default_factory=RolesConfig)
     embeddings: EmbeddingsConfig = Field(default_factory=EmbeddingsConfig)
+    project: ProjectConfig = Field(default_factory=ProjectConfig)
 
     def get_reviewer(self) -> RoleConfig:
         """Shortcut to get the reviewer configuration."""

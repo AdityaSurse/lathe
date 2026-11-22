@@ -77,6 +77,14 @@ from lathe.tools.shell import (
     kill_process_group,
     run_shell,
 )
+from lathe.tools.tests import (
+    RunTestsArgs,
+    RunTestsTool,
+    TestRunResult,
+    detect_test_command,
+    parse_test_output,
+    run_tests_helper,
+)
 
 __all__ = [
     "DEFAULT_MAX_FILE_SIZE_BYTES",
@@ -104,8 +112,11 @@ __all__ = [
     "ReadFileTool",
     "RiskLevel",
     "RunShellArgs",
+    "RunTestsArgs",
+    "RunTestsTool",
     "SemanticSearchArgs",
     "ShellTool",
+    "TestRunResult",
     "Tool",
     "ToolContext",
     "ToolProtocol",
@@ -118,6 +129,7 @@ __all__ = [
     "calculate_diff",
     "default_registry",
     "detect_encoding_and_newline",
+    "detect_test_command",
     "edit_file",
     "find_all_occurrences",
     "find_closest_matching_lines",
@@ -133,9 +145,11 @@ __all__ = [
     "list_dir",
     "parse_fallback_tool_calls",
     "parse_native_tool_calls",
+    "parse_test_output",
     "read_file",
     "render_compact_tree",
     "run_shell",
+    "run_tests_helper",
     "semantic_search",
     "tool",
     "truncate_output",

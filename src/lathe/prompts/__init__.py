@@ -19,3 +19,16 @@ def get_agent_system_prompt() -> str:
         "Read files before editing, make the smallest targeted change, "
         "run tests after changes, never guess file contents, and explain briefly then act."
     )
+
+
+def get_review_system_prompt() -> str:
+    """Load the code review rubric system prompt for the reviewer role."""
+    prompt_file = _PROMPTS_DIR / "review.md"
+    if prompt_file.is_file():
+        return prompt_file.read_text(encoding="utf-8")
+
+    return (
+        "You are Lathe's expert code reviewer. "
+        "Evaluate code changes for correctness, step match, no unrelated changes, "
+        "no secrets, and passing tests. Return JSON with verdict 'approve' or 'revise'."
+    )
