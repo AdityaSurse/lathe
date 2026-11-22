@@ -5,7 +5,10 @@ Lathe is an open-source terminal AI coding agent built around dual-model orchest
 ## Modules
 
 ### `lathe.cli`
-The command-line interface entry point parsed via Typer and styled with Rich. It dispatches global options like `--version`, executes utility commands like `lathe doctor` and `lathe merge`, and triggers interactive or headless agent sessions.
+The command-line interface entry point parsed via Typer and styled with Rich. It dispatches global options like `--version`, executes utility commands like `lathe doctor`, `lathe config`, and `lathe merge`, and triggers interactive or headless agent sessions.
+
+### `lathe.config`
+Configuration management system handling two-level TOML settings (global `~/.config/lathe/lathe.toml` and project `./lathe.toml`). It validates roles (planner, coder, reviewer, router) and operational parameters with Pydantic while isolating API tokens (`HF_TOKEN`) exclusively to environment variables.
 
 ### `lathe.session`
 Manages the active developer session lifecycle. It maintains conversational state, registers active workspace settings, and serializes checkpoint history across agent interactions.
@@ -50,6 +53,7 @@ flowchart TD
     classDef infra fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#f8fafc;
 
     CLI["lathe.cli"]:::entry
+    Config["lathe.config"]:::entry
     Session["lathe.session"]:::entry
     UI["lathe.ui"]:::entry
 
@@ -64,15 +68,18 @@ flowchart TD
     Merge["lathe.merge"]:::infra
     Bench["lathe.bench"]:::infra
 
+    CLI --> Config
     CLI --> Session
     CLI --> UI
     CLI --> Merge
     CLI --> Bench
 
+    Session --> Config
     Session --> Orchestrator
     Session --> Memory
     Session --> UI
 
+    Orchestrator --> Config
     Orchestrator --> LLM
     Orchestrator --> Tools
     Orchestrator --> Safety

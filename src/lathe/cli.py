@@ -4,14 +4,25 @@ import os
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 
 import httpx
 import typer
 from dotenv import load_dotenv
 from rich.console import Console
 from rich.table import Table
+from rich.tree import Tree
 
 from lathe import __version__
+from lathe.config import (
+    COMMENTED_TOML_TEMPLATE,
+    ConfigError,
+    get_global_config_path,
+    get_hf_token,
+    get_project_config_path,
+    load_config,
+    set_config_value,
+)
 from lathe.session import Session, SessionConfig  # noqa: F401
 
 # Load local environment variables (.env) if present
@@ -22,6 +33,13 @@ app = typer.Typer(
     help="Lathe: Terminal AI coding agent using local and open-source LLMs.",
     no_args_is_help=True,
 )
+config_app = typer.Typer(
+    name="config",
+    help="Inspect and manage Lathe configuration files.",
+    no_args_is_help=True,
+)
+app.add_typer(config_app, name="config")
+
 console = Console()
 
 
@@ -144,7 +162,7 @@ def doctor() -> None:
         )
 
     # 5. Hugging Face Token (never print the token value)
-    hf_token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN")
+    hf_token = get_hf_token()
     if hf_token:
         # Mask length preview without printing secret
         table.add_row(
@@ -160,6 +178,132 @@ def doctor() -> None:
         )
 
     console.print(table)
+
+
+# --- lathe config subcommands ---
+
+
+@config_app.command(name="init")
+def config_init(
+    path: Path = typer.Option(
+        Path("lathe.toml"),
+        "--path",
+        "-p",
+        help="Target file path to initialize.",
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        "-f",
+        help="Overwrite target file if it already exists.",
+    ),
+) -> None:
+    """Initialize a well-commented lathe.toml configuration file."""
+    if path.exists() and not force:
+        console.print(
+            f"[yellow]Warning: '{path}' already exists. Use --force to overwrite.[/yellow]"
+        )
+        raise typer.Exit(code=1)
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(COMMENTED_TOML_TEMPLATE, encoding="utf-8")
+    console.print(f"[green]Initialized configuration file at '{path}'[/green]")
+
+
+@config_app.command(name="show")
+def config_show(
+    project_dir: Path | None = typer.Option(
+        None,
+        "--project-dir",
+        "-d",
+        help="Project directory containing lathe.toml.",
+    ),
+) -> None:
+    """Display active merged configuration and source status in a Rich tree."""
+    try:
+        cfg = load_config(project_dir=project_dir, require_secrets=False)
+    except ConfigError as err:
+        console.print(f"[red]Error loading config:[/red] {err}")
+        raise typer.Exit(code=1) from err
+
+    tree = Tree("[bold cyan]Lathe Configuration[/bold cyan]")
+
+    # Settings branch
+    settings_node = tree.add("[bold white]Settings[/bold white]")
+    settings_node.add(f"mode: [bright_yellow]{cfg.settings.mode}[/bright_yellow]")
+    settings_node.add(f"max_agent_steps: [bright_cyan]{cfg.settings.max_agent_steps}[/bright_cyan]")
+    settings_node.add(
+        f"auto_approve_reads: [bright_green]{cfg.settings.auto_approve_reads}[/bright_green]"
+    )
+    settings_node.add(f"theme: [magenta]{cfg.settings.theme}[/magenta]")
+    blocked_node = settings_node.add("blocked_commands")
+    for cmd in cfg.settings.blocked_commands:
+        blocked_node.add(f"[red]{cmd}[/red]")
+
+    # Roles branch
+    roles_node = tree.add("[bold white]Roles[/bold white]")
+    for r_name in ["planner", "coder", "reviewer", "router"]:
+        if r_name == "reviewer":
+            if cfg.roles.reviewer is None:
+                roles_node.add("[dim]reviewer: (inherited from planner)[/dim]")
+                continue
+            r = cfg.roles.reviewer
+        else:
+            r = getattr(cfg.roles, r_name)
+
+        r_branch = roles_node.add(
+            f"[bold green]{r_name}[/bold green] (backend=[yellow]{r.backend}[/yellow])"
+        )
+        r_branch.add(f"model: [cyan]{r.model}[/cyan]")
+        r_branch.add(f"temperature: [dim]{r.temperature}[/dim]")
+        r_branch.add(f"max_tokens: [dim]{r.max_tokens}[/dim]")
+        r_branch.add(f"context_window: [dim]{r.context_window}[/dim]")
+        if r.base_url:
+            r_branch.add(f"base_url: [dim]{r.base_url}[/dim]")
+
+    # Secrets branch (masked)
+    secrets_node = tree.add("[bold white]Secrets & Environment[/bold white]")
+    hf_token = get_hf_token()
+    if hf_token:
+        masked = f"{hf_token[:4]}****" if len(hf_token) >= 4 else "****"
+        secrets_node.add(f"HF_TOKEN: [green]Present[/green] (masked: {masked})")
+    else:
+        secrets_node.add("HF_TOKEN: [yellow]Not Set[/yellow] (environment / .env)")
+
+    # Sources branch
+    sources_node = tree.add("[bold white]Configuration Sources[/bold white]")
+    g_path = get_global_config_path()
+    p_path = get_project_config_path(project_dir)
+    sources_node.add(
+        f"Global (~/.config/lathe/lathe.toml): "
+        f"{'[green]Found[/green]' if g_path.is_file() else '[dim]Not Found[/dim]'}"
+    )
+    sources_node.add(
+        f"Project (./lathe.toml): "
+        f"{'[green]Found[/green]' if p_path.is_file() else '[dim]Not Found[/dim]'}"
+    )
+
+    console.print(tree)
+
+
+@config_app.command(name="set")
+def config_set(
+    key: str = typer.Argument(..., help="Dot-notation key (e.g. roles.coder.model)"),
+    value: str = typer.Argument(..., help="Value to set"),
+    path: Path = typer.Option(
+        Path("lathe.toml"),
+        "--path",
+        "-p",
+        help="Target lathe.toml file to modify.",
+    ),
+) -> None:
+    """Set a configuration key in lathe.toml and validate."""
+    try:
+        set_config_value(key, value, path)
+        console.print(f"[green]Updated '{key}' = '{value}' in '{path}'[/green]")
+    except ConfigError as err:
+        console.print(f"[red]{err}[/red]")
+        raise typer.Exit(code=1) from err
 
 
 if __name__ == "__main__":
