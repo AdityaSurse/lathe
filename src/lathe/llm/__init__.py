@@ -1,11 +1,20 @@
-"""LLM interface package providing unified access to local and cloud backends."""
+"""LLM provider abstraction layer and unified client interfaces."""
 
-from typing import Any, Protocol
+from lathe.llm.base import LLMClient, LLMError, ModelNotFoundError
+from lathe.llm.factory import get_client
+from lathe.llm.ollama import OllamaClient
+from lathe.llm.types import Message, RoleType, StreamChunk, ToolCall, ToolSpec, Usage
 
-
-class LLMBackend(Protocol):
-    """Protocol for LLM providers (Ollama, Hugging Face, OpenAI-compatible)."""
-
-    def generate(self, prompt: str, **kwargs: Any) -> str:
-        """Generate a completion for the provided prompt."""
-        ...
+__all__ = [
+    "LLMClient",
+    "LLMError",
+    "Message",
+    "ModelNotFoundError",
+    "OllamaClient",
+    "RoleType",
+    "StreamChunk",
+    "ToolCall",
+    "ToolSpec",
+    "Usage",
+    "get_client",
+]

@@ -306,5 +306,77 @@ def config_set(
         raise typer.Exit(code=1) from err
 
 
+async def _stream_ask(prompt: str, role: str, model_override: str | None = None) -> None:
+    """Execute streaming query and print live Markdown with performance metrics."""
+    import time
+
+    from rich.live import Live
+    from rich.markdown import Markdown
+
+    from lathe.llm.base import LLMError
+    from lathe.llm.factory import get_client
+    from lathe.llm.types import Message
+
+    cfg = load_config(require_secrets=False)
+    client = get_client(role, config=cfg)
+    if model_override:
+        client.role_config.model = model_override
+
+    messages = [Message(role="user", content=prompt)]
+    accumulated_text = ""
+    start_time = time.perf_counter()
+    terminal_usage = None
+
+    try:
+        with Live(Markdown(""), refresh_per_second=15, console=console) as live:
+            async for chunk in client.chat(messages, stream=True):
+                if chunk.delta:
+                    accumulated_text += chunk.delta
+                    live.update(Markdown(accumulated_text))
+                if chunk.done and chunk.usage:
+                    terminal_usage = chunk.usage
+
+        elapsed = time.perf_counter() - start_time
+        if terminal_usage and terminal_usage.completion_tokens > 0:
+            tokens = terminal_usage.completion_tokens
+            speed = tokens / elapsed if elapsed > 0 else 0.0
+            console.print(
+                f"\n[dim]─── {tokens} tokens in {elapsed:.2f}s "
+                f"({speed:.1f} tokens/sec) · model: {client.role_config.model} ───[/dim]"
+            )
+        else:
+            word_count = len(accumulated_text.split())
+            speed = word_count / elapsed if elapsed > 0 else 0.0
+            console.print(
+                f"\n[dim]─── ~{word_count} words in {elapsed:.2f}s "
+                f"({speed:.1f} words/sec) · model: {client.role_config.model} ───[/dim]"
+            )
+    except LLMError as err:
+        console.print(f"[red]LLM Error:[/red] {err}")
+        raise typer.Exit(code=1) from err
+
+
+@app.command(name="ask")
+def ask(
+    prompt: str = typer.Argument(..., help="Prompt or instruction to query the model with."),
+    role: str = typer.Option(
+        "coder",
+        "--role",
+        "-r",
+        help="Agent role to query (planner, coder, reviewer, router).",
+    ),
+    model: str | None = typer.Option(
+        None,
+        "--model",
+        "-m",
+        help="Explicit model override.",
+    ),
+) -> None:
+    """Stream a live completion using Rich Markdown, printing tokens and throughput."""
+    import asyncio
+
+    asyncio.run(_stream_ask(prompt, role, model_override=model))
+
+
 if __name__ == "__main__":
     app()
