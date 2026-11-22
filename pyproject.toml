@@ -20,6 +20,7 @@ dependencies = [
     "pydantic-settings>=2.0.0",
     "python-dotenv>=1.0.0",
     "huggingface-hub>=0.20.0",
+    "prompt-toolkit>=3.0.0",
 ]
 
 [project.optional-dependencies]
