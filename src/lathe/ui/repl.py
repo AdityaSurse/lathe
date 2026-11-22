@@ -112,7 +112,12 @@ def run_repl(
     # Instantiate Agents and attach rich terminal event UI
     from lathe.orchestrator.agent import Agent
     from lathe.orchestrator.dual import DualAgent
+    from lathe.orchestrator.router import TaskRouter, get_read_search_tools, get_stats_collector
     from lathe.ui.agent_view import TerminalAgentUI
+
+    stats_collector = get_stats_collector(
+        session_id=checkpoint_mgr.session_id, workspace_root=Path.cwd()
+    )
 
     agent = Agent(
         config=active_config,
@@ -129,9 +134,25 @@ def run_repl(
         console=console,
         auto_approve=yolo,
     )
+    chat_agent = Agent(
+        config=active_config,
+        tools=get_read_search_tools(),
+        permission_engine=permission_engine,
+        checkpoint_manager=checkpoint_mgr,
+        workspace_root=Path.cwd(),
+        console=console,
+    )
+    router = TaskRouter(
+        config=active_config,
+        workspace_root=Path.cwd(),
+        console=console,
+        stats_collector=stats_collector,
+    )
+
     agent_ui = TerminalAgentUI(console=console)
     agent_ui.attach(agent.event_bus)
     agent_ui.attach(dual_agent.event_bus)
+    agent_ui.attach(chat_agent.event_bus)
 
     # Prepare history & completer
     history_path = get_history_file_path()
@@ -185,11 +206,28 @@ def run_repl(
         loop = asyncio.new_event_loop()
         try:
             asyncio.set_event_loop(loop)
-            is_dual = getattr(active_config.settings, "mode", "single") == "dual"
-            if is_dual:
-                task = loop.create_task(dual_agent.run(line))
-            else:
-                task = loop.create_task(agent.run(line, messages=messages))
+            current_mode = getattr(active_config.settings, "mode", "auto")
+
+            if current_mode == "dual":
+                coro = dual_agent.run(line)
+            elif current_mode == "single":
+                coro = agent.run(line, messages=messages)
+            else:  # "auto"
+
+                async def _routed_step(prompt: str = line) -> str:
+                    return await router.route_and_execute(
+                        prompt,
+                        messages=messages,
+                        auto_approve=auto or yolo,
+                        yolo=yolo,
+                        agent=agent,
+                        dual_agent=dual_agent,
+                        chat_agent=chat_agent,
+                    )
+
+                coro = _routed_step()
+
+            task = loop.create_task(coro)
             loop.run_until_complete(task)
         except KeyboardInterrupt:
             console.print("\n[yellow]Generation cancelled (Ctrl+C).[/yellow]\n")

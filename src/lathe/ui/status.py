@@ -65,6 +65,9 @@ def render_status_toolbar(config: LatheConfig, stats: SessionStats) -> HTML:
 
     if mode == "dual":
         models_str = f"coder: {coder_name} | planner: {planner_name}"
+    elif mode == "auto":
+        router_name = config.roles.router.model.split("/")[-1].split(":")[0]
+        models_str = f"router: {router_name} | coder: {coder_name}"
     else:
         models_str = f"coder: {coder_name}"
 

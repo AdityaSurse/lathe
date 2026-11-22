@@ -95,6 +95,7 @@ def run_task(
     from lathe.config import load_config
     from lathe.orchestrator.agent import run_one_shot
     from lathe.orchestrator.dual import run_dual_one_shot
+    from lathe.orchestrator.router import run_routed_one_shot
 
     auto = ctx.obj.get("auto", False) if ctx.obj else False
     yolo = ctx.obj.get("yolo", False) if ctx.obj else False
@@ -102,12 +103,14 @@ def run_task(
     task = " ".join(task_words)
 
     active_cfg = load_config(require_secrets=False)
-    is_dual = dual or (getattr(active_cfg.settings, "mode", "single") == "dual")
+    current_mode = "dual" if dual else getattr(active_cfg.settings, "mode", "auto")
 
-    if is_dual:
+    if current_mode == "dual":
         run_dual_one_shot(task, auto=auto, yolo=yolo)
-    else:
+    elif current_mode == "single":
         run_one_shot(task, auto=auto, yolo=yolo)
+    else:  # "auto"
+        run_routed_one_shot(task, auto=auto, yolo=yolo, config=active_cfg)
     raise typer.Exit(0)
 
 

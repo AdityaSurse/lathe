@@ -22,6 +22,7 @@ ALIAS_ROOT_FILES = {
     "test_dual.py",
     "test_tests.py",
     "test_review.py",
+    "test_router.py",
 }
 
 

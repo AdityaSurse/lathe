@@ -165,9 +165,9 @@ def handle_mode(
     stats: SessionStats,
     console: Console,
 ) -> bool:
-    """Toggle execution mode: /mode single|dual."""
-    if not args or args[0].lower() not in ("single", "dual"):
-        console.print("[yellow]Usage:[/yellow] /mode single|dual")
+    """Toggle execution mode: /mode single|dual|auto."""
+    if not args or args[0].lower() not in ("single", "dual", "auto"):
+        console.print("[yellow]Usage:[/yellow] /mode single|dual|auto")
         console.print(f"[dim]Current mode: {config.settings.mode}[/dim]")
         return True
 
@@ -184,6 +184,22 @@ def handle_mode(
             pass
 
     console.print(f"[green]Mode switched to '{new_mode}'[/green]")
+    return True
+
+
+def handle_stats(
+    args: list[str],
+    config: LatheConfig,
+    stats: SessionStats,
+    console: Console,
+) -> bool:
+    """Show per-role model call metrics, latency, and tokens/sec."""
+    from lathe.orchestrator.router import get_stats_collector
+
+    collector = get_stats_collector()
+    table = collector.render_rich_table()
+    console.print(table)
+    console.print(f"[dim]Saved to: {collector.get_stats_file_path()}[/dim]")
     return True
 
 
@@ -444,9 +460,17 @@ registry.register(
 registry.register(
     SlashCommand(
         name="/mode",
-        description="Switch between single (coder) and dual (planner+coder) mode",
-        usage="/mode single|dual",
+        description="Switch between auto (routed), single (coder), and dual mode",
+        usage="/mode single|dual|auto",
         handler=handle_mode,
+    )
+)
+registry.register(
+    SlashCommand(
+        name="/stats",
+        description="Show per-role model metrics, latency, and tokens/sec",
+        usage="/stats",
+        handler=handle_stats,
     )
 )
 registry.register(
