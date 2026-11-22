@@ -50,6 +50,8 @@ class RoleConfig(BaseModel):
     max_tokens: int = Field(default=4096, gt=0)
     context_window: int = Field(default=32768, gt=0)
     base_url: str | None = None
+    provider: str = "auto"
+    supports_tools: bool = True
 
 
 class RolesConfig(BaseModel):

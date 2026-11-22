@@ -32,7 +32,7 @@ Permission engine that inspects every mutating or shell action before execution.
 Short-term and compressed long-term memory engine. It maintains active execution scratchpads, caches AST symbol graphs, and performs lossless context compaction when conversation windows reach capacity.
 
 ### `lathe.ui`
-Terminal presentation layer implemented with Rich. It delivers streaming syntax-highlighted code output, formatted unified diffs, dynamic step checklists, and interactive permission dialogs.
+Terminal presentation layer implemented with prompt_toolkit and Rich. It powers the interactive REPL with persistent history, Alt+Enter multiline editing, @file repository path autocompletion, dynamic bottom status bar toolbar (repository, git branch, mode, active role models, session tokens), slash command framework (/help, /model, /mode, /clear, /tokens, /exit), unified theme palette (matching the README), and live streaming Markdown responses with syntax-highlighted code blocks and Ctrl+C generation cancellation.
 
 ### `lathe.merge`
 Model combination pipeline integrating `mergekit`. It builds SLERP and TIES interpolation configurations, converts safetensors via `llama.cpp`, quantizes models to Q4_K_M GGUF format, and generates Ollama Modelfiles.

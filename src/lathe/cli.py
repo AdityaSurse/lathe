@@ -23,6 +23,7 @@ from lathe.config import (
     load_config,
     set_config_value,
 )
+from lathe.models import models_app
 from lathe.session import Session, SessionConfig  # noqa: F401
 
 # Load local environment variables (.env) if present
@@ -31,7 +32,6 @@ load_dotenv()
 app = typer.Typer(
     name="lathe",
     help="Lathe: Terminal AI coding agent using local and open-source LLMs.",
-    no_args_is_help=True,
 )
 config_app = typer.Typer(
     name="config",
@@ -39,6 +39,7 @@ config_app = typer.Typer(
     no_args_is_help=True,
 )
 app.add_typer(config_app, name="config")
+app.add_typer(models_app, name="models")
 
 console = Console()
 
@@ -50,8 +51,9 @@ def version_callback(value: bool) -> None:
         raise typer.Exit()
 
 
-@app.callback()
+@app.callback(invoke_without_command=True)
 def main(
+    ctx: typer.Context,
     version: bool | None = typer.Option(
         None,
         "--version",
@@ -62,6 +64,10 @@ def main(
     ),
 ) -> None:
     """Lathe terminal AI coding agent."""
+    if ctx.invoked_subcommand is None:
+        from lathe.ui.repl import start_repl
+
+        start_repl()
 
 
 @app.command()
