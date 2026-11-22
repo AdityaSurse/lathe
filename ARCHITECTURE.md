@@ -1,0 +1,85 @@
+# Lathe Architecture
+
+Lathe is an open-source terminal AI coding agent built around dual-model orchestration, local GGUF runtimes, and automated weight merging. This document details each architectural package and the internal dependency structure.
+
+## Modules
+
+### `lathe.cli`
+The command-line interface entry point parsed via Typer and styled with Rich. It dispatches global options like `--version`, executes utility commands like `lathe doctor` and `lathe merge`, and triggers interactive or headless agent sessions.
+
+### `lathe.session`
+Manages the active developer session lifecycle. It maintains conversational state, registers active workspace settings, and serializes checkpoint history across agent interactions.
+
+### `lathe.orchestrator`
+The dual-LLM reasoning engine that decomposes high-level user tasks into sequential steps. It coordinates the Planner model (reasoning and diff review) with the Coder model (patch generation) in a closed verification loop.
+
+### `lathe.llm`
+Unified provider abstraction layer handling prompt dispatch, streaming token generation, and response parsing. It abstracts local inference through Ollama (GGUF) and cloud inference via the Hugging Face Inference Providers API or OpenAI-compatible backends.
+
+### `lathe.tools`
+A sandboxed tool registry providing the agent with filesystem operations, AST code search, unified diff application, test execution (`pytest`), and Git actions.
+
+### `lathe.context`
+Responsible for token budgeting and workspace awareness. It computes file embeddings, builds repository symbol maps, and strictly controls the 10/15/35/20/20 budget across system guidelines, AST maps, open files, dialogue, and tool logs.
+
+### `lathe.safety`
+Permission engine that inspects every mutating or shell action before execution. It enforces read-only auto-approval, interactive prompts for file writes or test runs, and hard-blocks destructive shell invocations.
+
+### `lathe.memory`
+Short-term and compressed long-term memory engine. It maintains active execution scratchpads, caches AST symbol graphs, and performs lossless context compaction when conversation windows reach capacity.
+
+### `lathe.ui`
+Terminal presentation layer implemented with Rich. It delivers streaming syntax-highlighted code output, formatted unified diffs, dynamic step checklists, and interactive permission dialogs.
+
+### `lathe.merge`
+Model combination pipeline integrating `mergekit`. It builds SLERP and TIES interpolation configurations, converts safetensors via `llama.cpp`, quantizes models to Q4_K_M GGUF format, and generates Ollama Modelfiles.
+
+### `lathe.bench`
+Local evaluation harness assessing candidate model pairs on syntax accuracy, refactoring correctness, and unit test pass rates.
+
+---
+
+## Module Dependency Graph
+
+```mermaid
+flowchart TD
+    classDef entry fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
+    classDef core fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#f8fafc;
+    classDef provider fill:#701a75,stroke:#f472b6,stroke-width:2px,color:#f8fafc;
+    classDef support fill:#78350f,stroke:#fbbf24,stroke-width:2px,color:#f8fafc;
+    classDef infra fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#f8fafc;
+
+    CLI["lathe.cli"]:::entry
+    Session["lathe.session"]:::entry
+    UI["lathe.ui"]:::entry
+
+    Orchestrator["lathe.orchestrator"]:::core
+    Safety["lathe.safety"]:::core
+    Memory["lathe.memory"]:::core
+    Context["lathe.context"]:::core
+
+    LLM["lathe.llm"]:::provider
+    Tools["lathe.tools"]:::support
+
+    Merge["lathe.merge"]:::infra
+    Bench["lathe.bench"]:::infra
+
+    CLI --> Session
+    CLI --> UI
+    CLI --> Merge
+    CLI --> Bench
+
+    Session --> Orchestrator
+    Session --> Memory
+    Session --> UI
+
+    Orchestrator --> LLM
+    Orchestrator --> Tools
+    Orchestrator --> Safety
+    Orchestrator --> Context
+    Orchestrator --> UI
+
+    Tools --> Safety
+    Context --> Memory
+    Bench --> LLM
+```
