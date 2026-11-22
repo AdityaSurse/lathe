@@ -33,6 +33,8 @@ def test_lathe_tools_command() -> None:
     assert "Lathe Workspace Tools" in res_tools.stdout
     assert "edit_file" in res_tools.stdout
     assert "read_file" in res_tools.stdout
+    assert "git_status" in res_tools.stdout
+    assert "git_commit" in res_tools.stdout
 
     res_tool = runner.invoke(app, ["tool"])
     assert res_tool.exit_code == 0

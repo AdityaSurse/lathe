@@ -214,6 +214,140 @@ def handle_exit(
     return False
 
 
+def handle_undo(
+    args: list[str],
+    config: LatheConfig,
+    stats: SessionStats,
+    console: Console,
+) -> bool:
+    """Restore the last checkpoint taken before modifications."""
+    from lathe.safety.checkpoints import get_checkpoint_manager
+
+    cm = get_checkpoint_manager()
+    if not cm.is_enabled:
+        console.print("[yellow]Checkpoints are disabled (not a git repository).[/yellow]")
+        return True
+
+    undone_ckpt = cm.undo()
+    if undone_ckpt:
+        console.print(
+            f"[green]✓ Undone to checkpoint #{undone_ckpt.number}:[/green] "
+            f"{undone_ckpt.description} [dim]({undone_ckpt.formatted_time})[/dim]"
+        )
+    else:
+        console.print("[yellow]No earlier checkpoints available to undo.[/yellow]")
+    return True
+
+
+def handle_checkpoints(
+    args: list[str],
+    config: LatheConfig,
+    stats: SessionStats,
+    console: Console,
+) -> bool:
+    """List all session checkpoints with timestamps and changed files."""
+    from lathe.safety.checkpoints import get_checkpoint_manager
+
+    cm = get_checkpoint_manager()
+    if not cm.is_enabled:
+        console.print("[yellow]Checkpoints are disabled (not a git repository).[/yellow]")
+        return True
+
+    ckpts = cm.list_checkpoints()
+    if not ckpts:
+        console.print("[dim]No checkpoints created in this session yet.[/dim]")
+        return True
+
+    table = Table(
+        title="Session Checkpoints",
+        title_style="bold cyan",
+        border_style="bright_blue",
+        show_header=True,
+        header_style="bold white",
+    )
+    table.add_column("#", style="bold green", width=4)
+    table.add_column("Time", style="dim", width=10)
+    table.add_column("Description", width=36)
+    table.add_column("Changed Files", style="cyan", width=30)
+
+    for c in ckpts:
+        changed_preview = ", ".join(c.changed_files[:3])
+        if len(c.changed_files) > 3:
+            changed_preview += f" (+{len(c.changed_files) - 3} more)"
+        table.add_row(str(c.number), c.formatted_time, c.description, changed_preview or "(none)")
+
+    console.print(table)
+    return True
+
+
+def handle_restore(
+    args: list[str],
+    config: LatheConfig,
+    stats: SessionStats,
+    console: Console,
+) -> bool:
+    """Restore workspace to a specific checkpoint number: /restore <n>."""
+    from lathe.safety.checkpoints import get_checkpoint_manager
+
+    if not args:
+        console.print("[yellow]Usage:[/yellow] /restore <n>")
+        return True
+
+    try:
+        n = int(args[0])
+    except ValueError:
+        console.print(f"[red]Invalid checkpoint number:[/red] '{args[0]}'. Must be an integer.")
+        return True
+
+    cm = get_checkpoint_manager()
+    if not cm.is_enabled:
+        console.print("[yellow]Checkpoints are disabled (not a git repository).[/yellow]")
+        return True
+
+    if cm.restore(n):
+        console.print(f"[green]✓ Successfully restored workspace to checkpoint #{n}[/green]")
+    else:
+        console.print(
+            f"[red]Failed to restore to checkpoint #{n}. "
+            "Check /checkpoints for valid numbers.[/red]"
+        )
+    return True
+
+
+def handle_diff(
+    args: list[str],
+    config: LatheConfig,
+    stats: SessionStats,
+    console: Console,
+) -> bool:
+    """Display unified diff of all modifications made during this session."""
+    from rich.panel import Panel
+    from rich.syntax import Syntax
+
+    from lathe.safety.checkpoints import get_checkpoint_manager
+
+    cm = get_checkpoint_manager()
+    if not cm.is_enabled:
+        console.print("[yellow]Checkpoints are disabled (not a git repository).[/yellow]")
+        return True
+
+    diff_text = cm.get_session_diff()
+    if not diff_text.strip():
+        console.print(
+            "[dim]No changes made in this session (working tree matches initial state).[/dim]"
+        )
+        return True
+
+    syntax = Syntax(diff_text, "diff", theme="monokai", line_numbers=True)
+    panel = Panel(
+        syntax,
+        title="[bold cyan]Session Changes (Unified Diff)[/bold cyan]",
+        border_style="cyan",
+    )
+    console.print(panel)
+    return True
+
+
 # Register all built-in commands
 registry = SlashCommandRegistry()
 registry.register(
@@ -262,5 +396,37 @@ registry.register(
         description="Gracefully exit Lathe REPL session",
         usage="/exit",
         handler=handle_exit,
+    )
+)
+registry.register(
+    SlashCommand(
+        name="/undo",
+        description="Restore the last checkpoint taken before modifications",
+        usage="/undo",
+        handler=handle_undo,
+    )
+)
+registry.register(
+    SlashCommand(
+        name="/checkpoints",
+        description="List all session checkpoints with timestamps and changed files",
+        usage="/checkpoints",
+        handler=handle_checkpoints,
+    )
+)
+registry.register(
+    SlashCommand(
+        name="/restore",
+        description="Restore workspace to a specific checkpoint number: /restore <n>",
+        usage="/restore <n>",
+        handler=handle_restore,
+    )
+)
+registry.register(
+    SlashCommand(
+        name="/diff",
+        description="Show unified diff of all modifications made during this session",
+        usage="/diff",
+        handler=handle_diff,
     )
 )

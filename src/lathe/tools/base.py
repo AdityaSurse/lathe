@@ -43,6 +43,10 @@ class ToolContext(BaseModel):
         default=None,
         description="Optional PermissionEngine instance to enforce authorization policies.",
     )
+    checkpoint_manager: Any = Field(
+        default=None,
+        description="Optional CheckpointManager instance for working tree snapshots.",
+    )
 
     def get_workspace(self) -> Any:
         """Return a Workspace boundary instance bound to the context workspace root."""
@@ -146,6 +150,19 @@ class Tool(ABC):
                 )
             if perm_result.edited_command and hasattr(validated_args, "command"):
                 validated_args.command = perm_result.edited_command
+
+        # Checkpoint snapshot before file modifications or shell execution
+        if context.checkpoint_manager is not None and self.risk_level in ("write", "execute"):
+            try:
+                target_desc = f"Before {self.name}"
+                if hasattr(validated_args, "path"):
+                    target_desc += f"({validated_args.path})"
+                elif hasattr(validated_args, "command"):
+                    cmd_preview = str(validated_args.command)[:30]
+                    target_desc += f"({cmd_preview})"
+                context.checkpoint_manager.create_checkpoint(target_desc)
+            except Exception:
+                pass
 
         # Execute tool logic with exception protection
         try:

@@ -88,6 +88,11 @@ def run_repl(config: LatheConfig | None = None) -> None:
     # Print startup banner
     print_startup_banner(active_config, console=console)
 
+    # Initialize checkpoint manager for active workspace
+    from lathe.safety.checkpoints import get_checkpoint_manager
+
+    get_checkpoint_manager(Path.cwd(), prompt_init=True)
+
     # Prepare history & completer
     history_path = get_history_file_path()
     history_path.parent.mkdir(parents=True, exist_ok=True)

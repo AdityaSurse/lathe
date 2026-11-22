@@ -13,6 +13,10 @@ SLASH_COMMAND_HINTS = [
     ("/clear", "Clear the terminal screen"),
     ("/tokens", "View session token usage statistics"),
     ("/exit", "Exit Lathe REPL session"),
+    ("/undo", "Restore the last checkpoint taken"),
+    ("/checkpoints", "List all session checkpoints"),
+    ("/restore", "Restore checkpoint: /restore <n>"),
+    ("/diff", "Show session modifications unified diff"),
 ]
 
 

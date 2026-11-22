@@ -16,12 +16,16 @@ from lathe.ui.banner import print_startup_banner
 from lathe.ui.commands import (
     SlashCommand,
     SlashCommandRegistry,
+    handle_checkpoints,
     handle_clear,
+    handle_diff,
     handle_exit,
     handle_help,
     handle_mode,
     handle_model,
+    handle_restore,
     handle_tokens,
+    handle_undo,
 )
 from lathe.ui.completer import LatheCompleter
 from lathe.ui.repl import _stream_chat_turn, get_history_file_path
@@ -190,6 +194,12 @@ def test_builtin_slash_commands(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
     # /tokens
     assert handle_tokens([], cfg, stats, console) is True
     assert "Session Token Consumption" in console.export_text()
+
+    # /checkpoints & /undo & /diff & /restore handlers execute gracefully
+    assert handle_checkpoints([], cfg, stats, console) is True
+    assert handle_undo([], cfg, stats, console) is True
+    assert handle_diff([], cfg, stats, console) is True
+    assert handle_restore(["1"], cfg, stats, console) is True
 
     # /exit returns False to break REPL loop
     assert handle_exit([], cfg, stats, console) is False

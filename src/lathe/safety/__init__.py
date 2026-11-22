@@ -2,6 +2,14 @@
 
 from enum import Enum
 
+from lathe.safety.checkpoints import (
+    CHECKPOINT_REF_PREFIX,
+    Checkpoint,
+    CheckpointManager,
+    auto_commit_task,
+    get_checkpoint_manager,
+    suggest_conventional_commit,
+)
 from lathe.safety.permissions import (
     DEFAULT_BLOCKLIST_PATTERNS,
     FORBIDDEN_ENV_NAMES,
@@ -33,6 +41,9 @@ class ActionPermission(Enum):
 
 
 __all__ = [
+    "CHECKPOINT_REF_PREFIX",
+    "Checkpoint",
+    "CheckpointManager",
     "DEFAULT_BLOCKLIST_PATTERNS",
     "DEFAULT_IGNORED_DIRS",
     "FORBIDDEN_ENV_NAMES",
@@ -47,7 +58,10 @@ __all__ = [
     "PermissionsStore",
     "Workspace",
     "WorkspaceError",
+    "auto_commit_task",
+    "get_checkpoint_manager",
     "is_blocked_command",
     "is_sensitive_env_var",
     "scrub_env",
+    "suggest_conventional_commit",
 ]
