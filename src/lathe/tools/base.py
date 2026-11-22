@@ -38,6 +38,12 @@ class ToolContext(BaseModel):
         description="Maximum character limit for output before truncation.",
     )
 
+    def get_workspace(self) -> Any:
+        """Return a Workspace boundary instance bound to the context workspace root."""
+        from lathe.safety.workspace import Workspace
+
+        return Workspace(self.workspace_root)
+
 
 def truncate_output(text: str, max_chars: int = 8000) -> str:
     """Truncate output exceeding max_chars and append a marker with remaining line count."""
