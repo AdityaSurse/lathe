@@ -1,7 +1,0 @@
-chflags -R nohidden .venv 2>/dev/null || true
-uv run ruff check .
-All checks passed!
-uv run ruff format --check .
-24 files already formatted
-uv run mypy src
-Success: no issues found in 18 source files
