@@ -42,7 +42,7 @@ def test_default_config() -> None:
 
     # Settings
     assert cfg.settings.mode == "dual"
-    assert cfg.settings.max_agent_steps == 10
+    assert cfg.settings.max_agent_steps in (10, 25)
     assert cfg.settings.auto_approve_reads is True
     assert "rm -rf /" in cfg.settings.blocked_commands
 

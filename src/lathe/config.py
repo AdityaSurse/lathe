@@ -95,7 +95,7 @@ class SettingsConfig(BaseModel):
     """General runtime and execution settings for Lathe."""
 
     mode: Literal["single", "dual"] = "dual"
-    max_agent_steps: int = Field(default=10, gt=0)
+    max_agent_steps: int = Field(default=25, gt=0)
     auto_approve_reads: bool = True
     blocked_commands: list[str] = Field(
         default_factory=lambda: [

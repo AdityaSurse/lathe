@@ -1,5 +1,7 @@
 """Interactive terminal REPL implementation powered by prompt_toolkit and Rich."""
 
+from __future__ import annotations
+
 import asyncio
 import time
 from pathlib import Path
@@ -14,8 +16,9 @@ from rich.markdown import Markdown
 
 from lathe.config import LatheConfig, get_global_config_path, load_config
 from lathe.llm.base import LLMError
-from lathe.llm.factory import get_client
 from lathe.llm.types import Message
+from lathe.safety.checkpoints import get_checkpoint_manager
+from lathe.safety.permissions import PermissionEngine, PermissionMode
 from lathe.ui.banner import print_startup_banner
 from lathe.ui.commands import registry
 from lathe.ui.completer import LatheCompleter
@@ -79,7 +82,11 @@ async def _stream_chat_turn(
         return None
 
 
-def run_repl(config: LatheConfig | None = None) -> None:
+def run_repl(
+    config: LatheConfig | None = None,
+    auto: bool = False,
+    yolo: bool = False,
+) -> None:
     """Start interactive Lathe REPL session."""
     active_config = config or load_config(require_secrets=False)
     console = get_console()
@@ -88,10 +95,33 @@ def run_repl(config: LatheConfig | None = None) -> None:
     # Print startup banner
     print_startup_banner(active_config, console=console)
 
-    # Initialize checkpoint manager for active workspace
-    from lathe.safety.checkpoints import get_checkpoint_manager
+    # Determine permission engine mode
+    mode = PermissionMode.DEFAULT
+    if yolo:
+        mode = PermissionMode.YOLO
+    elif auto:
+        mode = PermissionMode.AUTO
 
-    get_checkpoint_manager(Path.cwd(), prompt_init=True)
+    permission_engine = PermissionEngine(Path.cwd(), mode=mode, console=console)
+    if yolo:
+        permission_engine.emit_yolo_warning()
+
+    # Initialize checkpoint manager for active workspace
+    checkpoint_mgr = get_checkpoint_manager(Path.cwd(), prompt_init=True)
+
+    # Instantiate Agent and attach rich terminal event UI
+    from lathe.orchestrator.agent import Agent
+    from lathe.ui.agent_view import TerminalAgentUI
+
+    agent = Agent(
+        config=active_config,
+        permission_engine=permission_engine,
+        checkpoint_manager=checkpoint_mgr,
+        workspace_root=Path.cwd(),
+        console=console,
+    )
+    agent_ui = TerminalAgentUI(console=console)
+    agent_ui.attach(agent.event_bus)
 
     # Prepare history & completer
     history_path = get_history_file_path()
@@ -139,29 +169,26 @@ def run_repl(config: LatheConfig | None = None) -> None:
                 break
             continue
 
-        # Chat with coder model
-        try:
-            coder_client = get_client("coder", config=active_config)
-        except Exception as exc:
-            console.print(f"[red]Could not initialize coder client:[/red] {exc}")
-            continue
-
-        messages.append(Message(role="user", content=line))
-
-        # Stream chat response with Ctrl+C cancellation support
+        # Run agent loop with Ctrl+C cancellation support
         loop = asyncio.new_event_loop()
         try:
             asyncio.set_event_loop(loop)
-            task = loop.create_task(_stream_chat_turn(coder_client, messages, stats, console))
-            response_text = loop.run_until_complete(task)
-            if response_text:
-                messages.append(Message(role="assistant", content=response_text))
+            task = loop.create_task(agent.run(line, messages=messages))
+            loop.run_until_complete(task)
         except KeyboardInterrupt:
             console.print("\n[yellow]Generation cancelled (Ctrl+C).[/yellow]\n")
+        except LLMError as err:
+            console.print(f"\n[red]LLM Error:[/red] {err}\n")
+        except Exception as exc:
+            console.print(f"\n[red]Error:[/red] {exc}\n")
         finally:
             loop.close()
 
 
-def start_repl(config: LatheConfig | None = None) -> None:
+def start_repl(
+    config: LatheConfig | None = None,
+    auto: bool = False,
+    yolo: bool = False,
+) -> None:
     """Entry point to launch the REPL."""
-    run_repl(config=config)
+    run_repl(config=config, auto=auto, yolo=yolo)

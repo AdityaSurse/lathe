@@ -12,6 +12,8 @@ from dotenv import load_dotenv
 from rich.console import Console
 from rich.table import Table
 from rich.tree import Tree
+from typer._click.core import Context as ClickContext
+from typer.core import TyperGroup
 
 from lathe import __version__
 from lathe.config import (
@@ -29,7 +31,32 @@ from lathe.session import Session, SessionConfig  # noqa: F401
 # Load local environment variables (.env) if present
 load_dotenv()
 
+
+class DefaultTaskGroup(TyperGroup):
+    """Custom TyperGroup routing non-subcommand arguments to one-shot task execution."""
+
+    def parse_args(self, ctx: ClickContext, args: list[str]) -> list[str]:
+        """Route unrecognized positional arguments to the hidden __task__ command."""
+        args_list = list(args)
+        pos_idx = -1
+        i = 0
+        while i < len(args_list):
+            a = args_list[i]
+            if a in ("--auto", "--yolo", "-v", "--version", "--help", "-h") or a.startswith("-"):
+                i += 1
+            else:
+                pos_idx = i
+                break
+
+        if pos_idx != -1:
+            cmd_name = args_list[pos_idx]
+            if self.get_command(ctx, cmd_name) is None:
+                args_list.insert(pos_idx, "__task__")
+        return super().parse_args(ctx, args_list)
+
+
 app = typer.Typer(
+    cls=DefaultTaskGroup,
     name="lathe",
     help="Lathe: Terminal AI coding agent using local and open-source LLMs.",
 )
@@ -49,6 +76,21 @@ def version_callback(value: bool) -> None:
     if value:
         console.print(f"lathe version {__version__}")
         raise typer.Exit()
+
+
+@app.command(name="__task__", hidden=True)
+def run_task(
+    ctx: typer.Context,
+    task_words: list[str] = typer.Argument(..., help="Task prompt for one-shot agent execution."),
+) -> None:
+    """Execute a task in one-shot mode and exit."""
+    from lathe.orchestrator.agent import run_one_shot
+
+    auto = ctx.obj.get("auto", False) if ctx.obj else False
+    yolo = ctx.obj.get("yolo", False) if ctx.obj else False
+    task = " ".join(task_words)
+    run_one_shot(task, auto=auto, yolo=yolo)
+    raise typer.Exit(0)
 
 
 @app.callback(invoke_without_command=True)
@@ -74,6 +116,10 @@ def main(
     ),
 ) -> None:
     """Lathe terminal AI coding agent."""
+    ctx.ensure_object(dict)
+    ctx.obj["auto"] = auto
+    ctx.obj["yolo"] = yolo
+
     if yolo:
         from lathe.safety.permissions import PermissionEngine, PermissionMode
 
@@ -83,7 +129,7 @@ def main(
     if ctx.invoked_subcommand is None:
         from lathe.ui.repl import start_repl
 
-        start_repl()
+        start_repl(auto=auto, yolo=yolo)
 
 
 @app.command()

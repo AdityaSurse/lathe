@@ -7,8 +7,13 @@ from pathlib import Path
 import pytest
 
 # Specific directory names or top-level filenames that act as convenience aliases
-ALIAS_DIRS = {"git", "checkpoints", "checkpoint"}
-ALIAS_ROOT_FILES = {"test_git.py", "test_checkpoints.py", "test_checkpoint.py"}
+ALIAS_DIRS = {"git", "checkpoints", "checkpoint", "agent"}
+ALIAS_ROOT_FILES = {
+    "test_git.py",
+    "test_checkpoints.py",
+    "test_checkpoint.py",
+    "test_agent.py",
+}
 
 
 def pytest_ignore_collect(collection_path: Path, config: pytest.Config) -> bool | None:

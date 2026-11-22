@@ -1,15 +1,28 @@
-"""Orchestrator package coordinating multi-model planning, coding, and review."""
+"""Orchestrator package coordinating multi-model planning, coding, review, and agent execution."""
 
-from typing import Protocol
+from lathe.orchestrator.agent import Agent, run_one_shot
+from lathe.orchestrator.events import (
+    AgentEvent,
+    AgentHaltEvent,
+    DiffEvent,
+    EventBus,
+    FinalAnswerEvent,
+    NudgeEvent,
+    ThinkingEvent,
+    ToolEndEvent,
+    ToolStartEvent,
+)
 
-
-class Orchestrator(Protocol):
-    """Protocol for the dual-LLM agent orchestrator loop."""
-
-    def plan(self, prompt: str) -> list[str]:
-        """Formulate a step-by-step task execution plan."""
-        ...
-
-    def execute_step(self, step: str) -> str:
-        """Execute an individual step via the coder and reviewer models."""
-        ...
+__all__ = [
+    "Agent",
+    "AgentEvent",
+    "AgentHaltEvent",
+    "DiffEvent",
+    "EventBus",
+    "FinalAnswerEvent",
+    "NudgeEvent",
+    "ThinkingEvent",
+    "ToolEndEvent",
+    "ToolStartEvent",
+    "run_one_shot",
+]
