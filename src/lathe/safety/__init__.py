@@ -2,6 +2,18 @@
 
 from enum import Enum
 
+from lathe.safety.permissions import (
+    DEFAULT_BLOCKLIST_PATTERNS,
+    FORBIDDEN_ENV_NAMES,
+    PermissionDecision,
+    PermissionEngine,
+    PermissionMode,
+    PermissionResult,
+    PermissionsStore,
+    is_blocked_command,
+    is_sensitive_env_var,
+    scrub_env,
+)
 from lathe.safety.workspace import (
     DEFAULT_IGNORED_DIRS,
     FileAccessError,
@@ -21,11 +33,21 @@ class ActionPermission(Enum):
 
 
 __all__ = [
+    "DEFAULT_BLOCKLIST_PATTERNS",
     "DEFAULT_IGNORED_DIRS",
+    "FORBIDDEN_ENV_NAMES",
     "ActionPermission",
     "FileAccessError",
     "IgnoreRule",
     "PathEscapeError",
+    "PermissionDecision",
+    "PermissionEngine",
+    "PermissionMode",
+    "PermissionResult",
+    "PermissionsStore",
     "Workspace",
     "WorkspaceError",
+    "is_blocked_command",
+    "is_sensitive_env_var",
+    "scrub_env",
 ]

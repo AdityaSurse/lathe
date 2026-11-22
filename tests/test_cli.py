@@ -42,3 +42,15 @@ def test_lathe_tools_command() -> None:
     assert res_inspect.exit_code == 0
     assert "Tool: edit_file" in res_inspect.stdout
     assert "Parameters Schema:" in res_inspect.stdout
+
+    res_shell = runner.invoke(app, ["tools", "run_shell"])
+    assert res_shell.exit_code == 0
+    assert "Tool: run_shell" in res_shell.stdout
+    assert "Risk Level: execute" in res_shell.stdout
+
+
+def test_lathe_yolo_warning_cli() -> None:
+    """Verify that --yolo emits the security warning panel."""
+    res = runner.invoke(app, ["--yolo", "tools"])
+    assert res.exit_code == 0
+    assert "WARNING: YOLO mode active" in res.stdout

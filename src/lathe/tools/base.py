@@ -29,6 +29,8 @@ class ToolResult(BaseModel):
 class ToolContext(BaseModel):
     """Execution context provided to tools during runtime."""
 
+    model_config = {"arbitrary_types_allowed": True}
+
     workspace_root: Path = Field(
         default_factory=Path.cwd,
         description="Root directory of the workspace.",
@@ -36,6 +38,10 @@ class ToolContext(BaseModel):
     max_output_length: int = Field(
         default=8000,
         description="Maximum character limit for output before truncation.",
+    )
+    permission_engine: Any = Field(
+        default=None,
+        description="Optional PermissionEngine instance to enforce authorization policies.",
     )
 
     def get_workspace(self) -> Any:
@@ -117,6 +123,29 @@ class Tool(ABC):
                 output="",
                 error=f"Invalid arguments type: expected dict or {self.args_schema.__name__}.",
             )
+
+        # Check permissions if an engine is configured in context
+        if context.permission_engine is not None:
+            raw_dict = (
+                validated_args.model_dump()
+                if hasattr(validated_args, "model_dump")
+                else (args if isinstance(args, dict) else {})
+            )
+            perm_result = context.permission_engine.check_permission(self, raw_dict, context)
+            if perm_result.is_denied:
+                denied_msg = (
+                    perm_result.message_to_model
+                    or perm_result.reason
+                    or f"Permission denied for tool '{self.name}'."
+                )
+                return ToolResult(
+                    ok=False,
+                    output="",
+                    error=denied_msg,
+                    metadata={"permission_denied": True, "reason": perm_result.reason},
+                )
+            if perm_result.edited_command and hasattr(validated_args, "command"):
+                validated_args.command = perm_result.edited_command
 
         # Execute tool logic with exception protection
         try:

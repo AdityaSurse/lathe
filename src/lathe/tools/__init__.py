@@ -51,6 +51,12 @@ from lathe.tools.registry import (
     default_registry,
     tool,
 )
+from lathe.tools.shell import (
+    RunShellArgs,
+    ShellTool,
+    kill_process_group,
+    run_shell,
+)
 
 __all__ = [
     "DEFAULT_MAX_FILE_SIZE_BYTES",
@@ -68,6 +74,8 @@ __all__ = [
     "ReadFileArgs",
     "ReadFileTool",
     "RiskLevel",
+    "RunShellArgs",
+    "ShellTool",
     "Tool",
     "ToolContext",
     "ToolProtocol",
@@ -86,11 +94,13 @@ __all__ = [
     "get_tool_protocol_for_model",
     "glob",
     "is_binary_file",
+    "kill_process_group",
     "list_dir",
     "parse_fallback_tool_calls",
     "parse_native_tool_calls",
     "read_file",
     "render_compact_tree",
+    "run_shell",
     "tool",
     "truncate_output",
     "write_file",

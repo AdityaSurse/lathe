@@ -62,8 +62,24 @@ def main(
         callback=version_callback,
         is_eager=True,
     ),
+    auto: bool = typer.Option(
+        False,
+        "--auto",
+        help="Auto-approve write tools while still prompting for shell execution.",
+    ),
+    yolo: bool = typer.Option(
+        False,
+        "--yolo",
+        help="Approve all operations automatically (dangerous; blocklist still enforced).",
+    ),
 ) -> None:
     """Lathe terminal AI coding agent."""
+    if yolo:
+        from lathe.safety.permissions import PermissionEngine, PermissionMode
+
+        engine = PermissionEngine(Path.cwd(), mode=PermissionMode.YOLO, console=console)
+        engine.emit_yolo_warning()
+
     if ctx.invoked_subcommand is None:
         from lathe.ui.repl import start_repl
 
@@ -377,9 +393,25 @@ def ask(
         "-m",
         help="Explicit model override.",
     ),
+    auto: bool = typer.Option(
+        False,
+        "--auto",
+        help="Auto-approve write tools while still prompting for shell execution.",
+    ),
+    yolo: bool = typer.Option(
+        False,
+        "--yolo",
+        help="Approve all operations automatically (dangerous; blocklist still enforced).",
+    ),
 ) -> None:
     """Stream a live completion using Rich Markdown, printing tokens and throughput."""
     import asyncio
+
+    if yolo:
+        from lathe.safety.permissions import PermissionEngine, PermissionMode
+
+        engine = PermissionEngine(Path.cwd(), mode=PermissionMode.YOLO, console=console)
+        engine.emit_yolo_warning()
 
     asyncio.run(_stream_ask(prompt, role, model_override=model))
 
