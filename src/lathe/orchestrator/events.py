@@ -123,6 +123,18 @@ class PlanRevisedEvent(BaseAgentEvent):
     )
 
 
+class StepReviewedEvent(BaseAgentEvent):
+    """Emitted when the reviewer model completes code review on a step's diff."""
+
+    step_number: int = Field(description="1-based index of the reviewed step.")
+    step_title: str = Field(description="Title of the step.")
+    verdict: str = Field(description="Review verdict ('approve' or 'revise').")
+    summary: str = Field(default="", description="Summary of review findings.")
+    issues: list[dict[str, Any]] = Field(
+        default_factory=list, description="List of issues identified by the reviewer."
+    )
+
+
 # Union type representing any event emitted by the agent
 AgentEvent = (
     ThinkingEvent
@@ -136,6 +148,7 @@ AgentEvent = (
     | StepStartedEvent
     | StepDoneEvent
     | PlanRevisedEvent
+    | StepReviewedEvent
 )
 
 EventListener = Callable[[AgentEvent], None | Coroutine[Any, Any, None]]

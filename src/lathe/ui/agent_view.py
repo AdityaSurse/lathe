@@ -6,6 +6,7 @@ from typing import Any
 
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.panel import Panel
 from rich.table import Table
 
 from lathe.orchestrator.events import (
@@ -18,6 +19,7 @@ from lathe.orchestrator.events import (
     PlanCreatedEvent,
     PlanRevisedEvent,
     StepDoneEvent,
+    StepReviewedEvent,
     StepStartedEvent,
     ThinkingEvent,
     ToolEndEvent,
@@ -37,6 +39,7 @@ TOOL_ICONS: dict[str, str] = {
     "git_diff": "🌿",
     "git_log": "🌿",
     "git_commit": "🌿",
+    "run_tests": "🧪",
     "echo": "📢",
 }
 
@@ -96,6 +99,10 @@ def format_args_summary(tool_name: str, args: dict[str, Any]) -> str:
         prefix = "staged" if staged else "unstaged"
         return f"{prefix} {path}" if path else prefix
 
+    if name == "run_tests":
+        raw_cmd = args.get("command")
+        return f'"{raw_cmd}"' if raw_cmd else "(auto-detect)"
+
     # Generic fallback
     compact = ", ".join(f"{k}={v}" for k, v in args.items() if not isinstance(v, (dict, list)))
     return compact[:60]
@@ -141,6 +148,8 @@ class TerminalAgentUI:
             self._handle_step_done(event)
         elif isinstance(event, PlanRevisedEvent):
             self._handle_plan_revised(event)
+        elif isinstance(event, StepReviewedEvent):
+            self._handle_step_reviewed(event)
 
     def _handle_thinking(self, event: ThinkingEvent) -> None:
         """Optionally display high-level thinking or reasoning if non-empty."""
@@ -257,3 +266,43 @@ class TerminalAgentUI:
         steps_lbl = f"{event.total_steps} remaining steps"
         tag = f"[bold {WARNING}]↻ Plan revised ({steps_lbl}):[/bold {WARNING}]"
         self.console.print(f"\n{tag} [dim]{event.explanation}[/dim]\n")
+
+    def _handle_step_reviewed(self, event: StepReviewedEvent) -> None:
+        """Render review panel with green APPROVED or yellow REVISE badge and issues list."""
+        if event.verdict == "approve":
+            badge = "[bold black on green] APPROVED [/bold black on green]"
+            border_style = "green"
+            title = (
+                f"{badge}  [bold green]Step [{event.step_number}] {event.step_title}[/bold green]"
+            )
+            content = f"[green]✓ {event.summary or 'Rubric evaluation passed cleanly.'}[/green]"
+        else:
+            badge = "[bold black on yellow] REVISE [/bold black on yellow]"
+            border_style = "yellow"
+            title = (
+                f"{badge}  [bold yellow]Step [{event.step_number}] {event.step_title}[/bold yellow]"
+            )
+            lines = [f"[yellow]{event.summary or 'Revisions requested by reviewer.'}[/yellow]", ""]
+            if event.issues:
+                lines.append("[bold]Issues Identified:[/bold]")
+                for issue in event.issues:
+                    file_info = str(issue.get("file", ""))
+                    line_no = issue.get("line")
+                    loc = f"{file_info}:{line_no}" if line_no else file_info
+                    problem = issue.get("problem", "")
+                    suggestion = issue.get("suggestion", "")
+                    lines.append(f"  • [bold yellow]{loc}[/bold yellow]: {problem}")
+                    if suggestion:
+                        lines.append(f"    [dim]Suggestion: {suggestion}[/dim]")
+            content = "\n".join(lines)
+
+        panel = Panel(
+            content,
+            title=title,
+            border_style=border_style,
+            expand=False,
+            padding=(0, 1),
+        )
+        self.console.print()
+        self.console.print(panel)
+        self.console.print()

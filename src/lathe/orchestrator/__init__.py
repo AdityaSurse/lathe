@@ -12,11 +12,13 @@ from lathe.orchestrator.events import (
     PlanCreatedEvent,
     PlanRevisedEvent,
     StepDoneEvent,
+    StepReviewedEvent,
     StepStartedEvent,
     ThinkingEvent,
     ToolEndEvent,
     ToolStartEvent,
 )
+from lathe.orchestrator.review import ReviewIssue, ReviewVerdict, StepReviewer
 
 __all__ = [
     "Agent",
@@ -32,7 +34,11 @@ __all__ = [
     "PlanRevision",
     "PlanRevisedEvent",
     "PlanStep",
+    "ReviewIssue",
+    "ReviewVerdict",
     "StepDoneEvent",
+    "StepReviewedEvent",
+    "StepReviewer",
     "StepStartedEvent",
     "ThinkingEvent",
     "ToolEndEvent",

@@ -20,6 +20,8 @@ ALIAS_ROOT_FILES = {
     "test_index.py",
     "test_budget.py",
     "test_dual.py",
+    "test_tests.py",
+    "test_review.py",
 }
 
 

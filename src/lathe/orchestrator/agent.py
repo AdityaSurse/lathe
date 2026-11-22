@@ -50,6 +50,7 @@ class Agent:
         event_bus: EventBus | None = None,
         max_steps: int | None = None,
         console: Console | None = None,
+        self_check: bool = False,
     ) -> None:
         self.config = config or load_config(require_secrets=False)
         self.workspace_root = workspace_root or Path.cwd()
@@ -58,6 +59,9 @@ class Agent:
         self.event_bus = event_bus or EventBus()
         self.max_steps: int = int(
             max_steps or getattr(self.config.settings, "max_agent_steps", 25) or 25
+        )
+        self.self_check: bool = self_check or bool(
+            getattr(self.config.settings, "self_check", False)
         )
 
         # Initialize or resolve LLM client (coder role)
@@ -162,6 +166,7 @@ class Agent:
                 conversation_messages.append(Message(role="user", content=task))
 
         step_idx = 0
+        self_check_performed = False
 
         while step_idx < self.max_steps:
             step_idx += 1
@@ -230,6 +235,33 @@ class Agent:
 
             # 3. If no tool calls -> Final Answer reached!
             if not tool_calls:
+                if self.self_check and not self_check_performed:
+                    self_check_performed = True
+                    from lathe.tools.tests import run_tests_helper
+
+                    test_res = run_tests_helper(self.workspace_root, self.config)
+                    if not test_res.is_success:
+                        self.console.print(
+                            "\n[bold yellow]🧪 Self-check: tests failed. "
+                            "Prompting model to fix failures...[/bold yellow]\n"
+                        )
+                        conversation_messages.append(
+                            Message(role="assistant", content=full_content)
+                        )
+                        fail_details = test_res.failing_output or test_res.raw_output[:1000]
+                        conversation_messages.append(
+                            Message(
+                                role="user",
+                                content=(
+                                    f"Self-check test failure: The test suite failed after your "
+                                    f"changes (exit code {test_res.exit_code}):\n"
+                                    f"{fail_details}\n\n"
+                                    "Please fix failing tests before providing your final answer."
+                                ),
+                            )
+                        )
+                        continue
+
                 conversation_messages.append(Message(role="assistant", content=full_content))
                 await self.event_bus.emit(
                     FinalAnswerEvent(
@@ -448,6 +480,7 @@ def run_one_shot(
     auto: bool = False,
     yolo: bool = False,
     config: LatheConfig | None = None,
+    self_check: bool = False,
 ) -> str:
     """Run agent in one-shot mode (`lathe "task"`) and return final result."""
     from lathe.ui.agent_view import TerminalAgentUI
@@ -475,6 +508,7 @@ def run_one_shot(
         checkpoint_manager=checkpoint_mgr,
         workspace_root=workspace,
         console=console,
+        self_check=self_check,
     )
 
     # Attach terminal UI listener to event bus
