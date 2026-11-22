@@ -113,6 +113,88 @@ def map_cmd(
         console.print("[dim]No symbols found or empty repository.[/dim]")
 
 
+@app.command(name="index")
+def index_cmd(
+    rebuild: bool = typer.Option(
+        False,
+        "--rebuild",
+        "-r",
+        help="Rebuild the entire semantic code index from scratch.",
+    ),
+    stats: bool = typer.Option(
+        False,
+        "--stats",
+        "-s",
+        help="Display semantic code index statistics without rebuilding.",
+    ),
+) -> None:
+    """Build or incrementally refresh the semantic code vector index."""
+    from rich.progress import (
+        BarColumn,
+        Progress,
+        SpinnerColumn,
+        TaskProgressColumn,
+        TextColumn,
+        TimeElapsedColumn,
+    )
+
+    from lathe.context.index import CodeIndex
+
+    index = CodeIndex(workspace_root=Path.cwd())
+
+    if stats:
+        st = index.get_stats()
+        console.print("\n[bold cyan]Lathe Code Index Statistics[/bold cyan]")
+        console.print(f"  Files Indexed:   [green]{st['files']}[/green]")
+        console.print(f"  Chunks Indexed:  [green]{st['chunks']}[/green]")
+        console.print(f"  Database Size:   [dim]{st['db_size_bytes'] / 1024:.1f} KB[/dim]")
+        console.print(f"  Database Path:   [dim]{st['db_path']}[/dim]\n")
+        return
+
+    added, modified, deleted = index.get_stale_status()
+    total_files = len(added) + len(modified)
+
+    if not rebuild and total_files == 0 and len(deleted) == 0:
+        st = index.get_stats()
+        console.print(
+            f"[green]✓[/green] Semantic index is up to date ({st['files']} files, "
+            f"{st['chunks']} chunks)."
+        )
+        return
+
+    action_label = "Rebuilding" if rebuild else "Refreshing"
+    console.print(f"\n[bold blue]Lathe Code Index[/bold blue]: {action_label} vector index...\n")
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[bold cyan]{task.description}"),
+        BarColumn(),
+        TaskProgressColumn(),
+        TimeElapsedColumn(),
+        console=console,
+    ) as progress:
+        task_id = progress.add_task("Indexing files...", total=max(total_files, 1))
+
+        def on_progress(rel_path: str, current: int, total: int) -> None:
+            progress.update(
+                task_id,
+                total=total,
+                completed=current,
+                description=f"Indexing: [dim]{rel_path}[/dim]",
+            )
+
+        res = index.refresh(progress_callback=on_progress, force=rebuild)
+        progress.update(task_id, completed=max(total_files, 1), description="Indexing complete")
+
+    console.print(
+        f"[green]✓[/green] Index {action_label.lower()} complete: "
+        f"[bold]{res['files_indexed']}[/bold] files processed, "
+        f"[bold]{res['chunks_indexed']}[/bold] chunks embedded, "
+        f"[dim]{res['chunks_reused']} chunks reused[/dim], "
+        f"[dim]{res['files_deleted']} files removed[/dim].\n"
+    )
+
+
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,

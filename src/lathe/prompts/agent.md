@@ -43,6 +43,14 @@ You have access to a suite of workspace tools. Use them judiciously according to
 10. `git_commit(message)`:
     - When to use: Commit verified changes using Conventional Commits format when asked or when completing a major task milestone.
 
+11. `grep_search(pattern, path_glob, regex)`:
+    - When to use: Fast exact text or regex search across workspace files. Returns matching lines with 2 lines of surrounding context. Use when searching for exact identifier names, class/function definitions, variables, string literals, imports, or error codes.
+    - When NOT to use: Do not use for vague, high-level, or conceptual questions ("where is code that handles X?").
+
+12. `semantic_search(query, k)`:
+    - When to use: Natural language conceptual search across workspace vector chunks. Use when you don't know the exact function, class, or variable name ("where is database connection established?", "how does error retry work?").
+    - When NOT to use: Do not use when looking for exact names or string literals (use `grep_search` instead).
+
 ## Operational Rules & Best Practices
 
 1. **Read Before Editing**: NEVER modify a file without first reading its current contents. Understand the existing style, imports, and indentation.
