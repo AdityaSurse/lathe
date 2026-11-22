@@ -3,7 +3,7 @@
 # Note: Secrets (HF_TOKEN) must NEVER be placed in this file; use environment variables or .env.
 
 [settings]
-mode = "dual"                  # "single" (coder only) or "dual" (planner + coder)
+mode = "single"                # "single" (coder only) or "dual" (planner + coder)
 max_agent_steps = 10           # Max execution steps per task
 auto_approve_reads = true      # Auto-allow non-mutating file reads and ast queries
 theme = "lathe-dark"           # Rich terminal color theme
@@ -24,7 +24,7 @@ context_window = 65536
 
 [roles.coder]
 backend = "ollama"
-model = "hf.co/Qwen/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M"
+model = "hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M"
 temperature = 0.2
 max_tokens = 4096
 context_window = 32768
