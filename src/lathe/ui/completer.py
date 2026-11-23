@@ -8,6 +8,8 @@ from prompt_toolkit.document import Document
 
 SLASH_COMMAND_HINTS = [
     ("/help", "Show list of available slash commands"),
+    ("/init", "Explore repository and write first LATHE.md project instructions"),
+    ("/remember", "Append a fact or note to LATHE.md: /remember <fact>"),
     ("/model", "Switch active model: /model <role> <id>"),
     ("/mode", "Switch mode: /mode single|dual|auto"),
     ("/clear", "Clear the terminal screen"),
@@ -37,8 +39,24 @@ class LatheCompleter(Completer):
 
         # 1. Slash command autocompletion
         if text_before_cursor.startswith("/") and " " not in text_before_cursor:
+            seen_cmds: set[str] = set()
+            try:
+                from lathe.ui.commands import registry
+
+                for sc in registry.list_commands():
+                    seen_cmds.add(sc.name)
+                    if sc.name.startswith(text_before_cursor):
+                        yield Completion(
+                            text=sc.name,
+                            start_position=-len(text_before_cursor),
+                            display=sc.name,
+                            display_meta=sc.description,
+                        )
+            except Exception:
+                pass
+
             for cmd, desc in SLASH_COMMAND_HINTS:
-                if cmd.startswith(text_before_cursor):
+                if cmd not in seen_cmds and cmd.startswith(text_before_cursor):
                     yield Completion(
                         text=cmd,
                         start_position=-len(text_before_cursor),

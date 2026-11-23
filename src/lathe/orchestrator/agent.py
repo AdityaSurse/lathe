@@ -107,6 +107,16 @@ class Agent:
             fallback_instructions = build_fallback_system_prompt(tool_specs)
             base_prompt = f"{base_prompt}\n\n{fallback_instructions}"
 
+        # Inject LATHE.md instructions if present (repo root or ~/.config/lathe/LATHE.md)
+        try:
+            from lathe.memory.instructions import load_project_instructions
+
+            lathe_md_instructions = load_project_instructions(self.workspace_root)
+            if lathe_md_instructions:
+                base_prompt = f"{base_prompt}\n\n{lathe_md_instructions}"
+        except Exception:
+            pass
+
         try:
             from lathe.context.repomap import RepoMap
 

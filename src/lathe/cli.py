@@ -275,12 +275,32 @@ def main(
         "--dual",
         help="Run in dual mode (planner creates plan, coder executes each step).",
     ),
+    resume: bool = typer.Option(
+        False,
+        "--resume",
+        "-r",
+        help="Resume a previous session selected from a list.",
+    ),
+    continue_session: bool = typer.Option(
+        False,
+        "--continue",
+        "-c",
+        help="Continue the most recent session.",
+    ),
+    mcp: bool = typer.Option(
+        False,
+        "--mcp",
+        help="Enable Model Context Protocol (MCP) servers configured in lathe.toml.",
+    ),
 ) -> None:
     """Lathe terminal AI coding agent."""
     ctx.ensure_object(dict)
     ctx.obj["auto"] = auto
     ctx.obj["yolo"] = yolo
     ctx.obj["dual"] = dual
+    ctx.obj["resume"] = resume
+    ctx.obj["continue"] = continue_session
+    ctx.obj["mcp"] = mcp
 
     if yolo:
         from lathe.safety.permissions import PermissionEngine, PermissionMode
@@ -291,7 +311,13 @@ def main(
     if ctx.invoked_subcommand is None:
         from lathe.ui.repl import start_repl
 
-        start_repl(auto=auto, yolo=yolo)
+        start_repl(
+            auto=auto,
+            yolo=yolo,
+            resume=resume,
+            continue_last=continue_session,
+            enable_mcp=mcp,
+        )
 
 
 @app.command()
