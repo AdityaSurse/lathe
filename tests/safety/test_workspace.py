@@ -161,3 +161,26 @@ def test_workspace_latheignore_parsing(tmp_path: Path) -> None:
     assert ws.is_ignored("secrets/keys.json") is True
     assert ws.is_ignored("config.secret") is True
     assert ws.is_ignored("config.json") is False
+
+
+def test_guard_home_and_root_directory(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """Home directory and / are rejected as project folders."""
+    from lathe.safety.guard import check_is_project_folder
+
+    is_proj_home, msg_home = check_is_project_folder(Path.home())
+    assert is_proj_home is False
+    assert "Not in a project folder — cd into a project for full features." in (msg_home or "")
+
+    is_proj_root, msg_root = check_is_project_folder(Path("/"))
+    assert is_proj_root is False
+    assert "Not in a project folder — cd into a project for full features." in (msg_root or "")
+
+
+def test_guard_git_repository(tmp_path: Path) -> None:
+    """Folder containing .git is recognized as a valid project folder."""
+    from lathe.safety.guard import check_is_project_folder
+
+    (tmp_path / ".git").mkdir()
+    is_proj, msg = check_is_project_folder(tmp_path)
+    assert is_proj is True
+    assert msg is None

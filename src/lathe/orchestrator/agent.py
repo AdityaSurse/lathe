@@ -118,6 +118,11 @@ class Agent:
             pass
 
         try:
+            from lathe.safety.guard import check_is_project_folder
+
+            if not check_is_project_folder(self.workspace_root)[0]:
+                return base_prompt
+
             from lathe.context.repomap import RepoMap
 
             repomap_budget = getattr(self.config.settings, "repomap_token_budget", 2048)

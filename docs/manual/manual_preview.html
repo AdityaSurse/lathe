@@ -393,10 +393,13 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <li><a href="#1-what-is-lathe">What is Lathe</a></li>
 <li><a href="#2-system-requirements">System Requirements</a></li>
 <li><a href="#3-installation-guide">Installation Guide</a></li>
-<li><a href="#macos-installation">macOS</a></li>
-<li><a href="#linux-installation">Linux</a></li>
-<li><a href="#windows-installation">Windows</a></li>
-<li><a href="#verifying-with-lathe-doctor">Verifying with lathe doctor</a></li>
+<li><a href="#before-you-start">Before You Start</a></li>
+<li><a href="#macos-installation">macOS Installation</a></li>
+<li><a href="#windows-installation">Windows Installation</a></li>
+<li><a href="#linux-installation">Linux Installation</a></li>
+<li><a href="#updating-lathe">Updating Lathe</a></li>
+<li><a href="#uninstalling-lathe">Uninstalling Lathe</a></li>
+<li><a href="#installation-troubleshooting">Installation Troubleshooting</a></li>
 <li><a href="#4-quick-start-first-session-in-5-minutes">Quick Start: First Session in 5 Minutes</a></li>
 <li><a href="#5-core-concepts">Core Concepts</a></li>
 <li><a href="#model-roles">Model Roles: Planner, Coder, Reviewer, Router</a></li>
@@ -525,122 +528,671 @@ flowchart TD
 </ul>
 <hr />
 <h2 id="3-installation-guide">3. Installation Guide<a class="headerlink" href="#3-installation-guide" title="Permanent link">&para;</a></h2>
-<p>Lathe is packaged as a standalone Python distribution installable with Astral's ultra-fast <code>uv</code> package manager, <code>pipx</code>, or standard shell one-liners.</p>
+<p>This chapter walks you step-by-step through setting up Lathe on your computer. Even if you have never used a command-line terminal before, you can follow along by copy-pasting the exact commands below in order.</p>
+<hr />
+<h3 id="before-you-start">Before You Start<a class="headerlink" href="#before-you-start" title="Permanent link">&para;</a></h3>
+<p>Review the hardware and software prerequisites below before downloading models or installing Lathe.</p>
+<h4 id="hardware-system-requirements">Hardware &amp; System Requirements<a class="headerlink" href="#hardware-system-requirements" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Requirement</th>
+<th style="text-align: left;">Minimum</th>
+<th style="text-align: left;">Recommended</th>
+<th style="text-align: left;">Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Operating System</strong></td>
+<td style="text-align: left;">macOS 12+, Windows 10/11, or modern Linux</td>
+<td style="text-align: left;">macOS 14+ (Apple Silicon), Windows 11, Ubuntu 22.04+</td>
+<td style="text-align: left;">64-bit OS required across all platforms.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>System RAM</strong></td>
+<td style="text-align: left;">8 GB Unified Memory / RAM</td>
+<td style="text-align: left;">16 GB+ Unified Memory / RAM</td>
+<td style="text-align: left;">Models run in RAM / VRAM via Ollama.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Free Disk Space</strong></td>
+<td style="text-align: left;">10 GB SSD</td>
+<td style="text-align: left;">15–25 GB SSD</td>
+<td style="text-align: left;">Needed for model weights and tool caching.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Internet Access</strong></td>
+<td style="text-align: left;">Broadband (initial setup only)</td>
+<td style="text-align: left;">Broadband (initial setup only)</td>
+<td style="text-align: left;">Needed once for downloads; runtime execution is 100% offline.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="which-models-for-my-ram">Which Models for My RAM?<a class="headerlink" href="#which-models-for-my-ram" title="Permanent link">&para;</a></h4>
+<p>Lathe uses Ollama to run compact, quantized language models directly on your hardware. Pick the tier matching your available RAM:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">System RAM</th>
+<th style="text-align: left;">Recommended Team / Preset</th>
+<th style="text-align: left;">Coder Model</th>
+<th style="text-align: left;">Router Model</th>
+<th style="text-align: left;">Embeddings Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>8 GB RAM</strong></td>
+<td style="text-align: left;"><strong>Fast / Lightweight</strong> (<code>fast</code>)</td>
+<td style="text-align: left;"><code>gemma4:e2b</code> or <code>Qwen2.5-Coder-1.5B</code></td>
+<td style="text-align: left;"><code>gemma4:e2b</code></td>
+<td style="text-align: left;"><code>nomic-embed-text</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>16 GB RAM</strong></td>
+<td style="text-align: left;"><strong>Qwen Team</strong> (<code>qwen</code>)</td>
+<td style="text-align: left;"><code>Qwen2.5-Coder-7B</code> (bartowski)</td>
+<td style="text-align: left;"><code>Qwen2.5-Coder-1.5B</code></td>
+<td style="text-align: left;"><code>nomic-embed-text</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>32 GB+ RAM</strong></td>
+<td style="text-align: left;"><strong>Reasoning Team</strong> (<code>qwen</code> or <code>mixed</code>)</td>
+<td style="text-align: left;"><code>Qwen2.5-Coder-7B</code> or <code>32B</code></td>
+<td style="text-align: left;"><code>Qwen2.5-Coder-1.5B</code></td>
+<td style="text-align: left;"><code>nomic-embed-text</code> + local 7B planner</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-warning">
+<div class="callout-title">⚠️ Warning</div>
+**Always use the single-file bartowski 7B model tag:**
+When downloading the 7B coder model, always pull `hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M`. Never pull `hf.co/Qwen/Qwen2.5-Coder-7B-Instruct-GGUF` directly—the upstream Qwen repository distributes sharded split files that Ollama cannot assemble.
+</div>
+
+<div style="page-break-before: always;"></div>
+
 <h3 id="macos-installation">macOS Installation<a class="headerlink" href="#macos-installation" title="Permanent link">&para;</a></h3>
-<ol>
-<li>
-<p><strong>Install Homebrew and uv</strong> (if not already installed):
-   <code>bash
-   # Install uv via Homebrew or official Astral script
-   brew install uv
-   # Or: curl -LsSf https://astral.sh/uv/install.sh | sh</code></p>
-</li>
-<li>
-<p><strong>Install Lathe Tool</strong>:
-   <code>bash
-   uv tool install lathe-agent</code>
-   <em>(To install with model merging and sentence-transformer embeddings extras:)</em>
-   <code>bash
-   uv tool install "lathe-agent[merge,embeddings]"</code></p>
-</li>
-<li>
-<p><strong>Install and Start Ollama</strong>:
-   <code>bash
-   brew install --cask ollama
-   # Launch Ollama in the background
-   ollama serve</code></p>
-</li>
-<li>
-<p><strong>Pull Recommended Models</strong>:
-   ```bash
-   # Primary Coder model (7B GGUF single-file quant)
-   ollama pull hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M</p>
-</li>
-</ol>
-<p># Lightweight Router model (1.5B GGUF)
-   ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M</p>
-<p># Fast embeddings model for semantic code search
-   ollama pull nomic-embed-text
-   ```</p>
-<ol>
-<li><strong>(Optional) Configure Hugging Face API Token</strong>:
-   If using cloud-hosted inference for deep reasoning planner models (e.g. <code>DeepSeek-R1</code>), obtain a free access token from <a href="https://huggingface.co/settings/tokens">Hugging Face Settings</a> and export it:
-   <code>bash
-   echo 'HF_TOKEN="hf_your_personal_access_token_here"' &gt;&gt; ~/.zshrc
-   source ~/.zshrc</code></li>
-</ol>
-<hr />
-<h3 id="linux-installation">Linux Installation<a class="headerlink" href="#linux-installation" title="Permanent link">&para;</a></h3>
-<ol>
-<li>
-<p><strong>Install uv</strong>:
-   <code>bash
-   curl -LsSf https://astral.sh/uv/install.sh | sh
-   export PATH="$HOME/.local/bin:$PATH"</code></p>
-</li>
-<li>
-<p><strong>Install Lathe</strong>:
-   <code>bash
-   uv tool install lathe-agent</code></p>
-</li>
-<li>
-<p><strong>Install Ollama</strong>:
-   <code>bash
-   curl -fsSL https://ollama.com/install.sh | sh</code></p>
-</li>
-<li>
-<p><strong>Pull Default Models</strong>:
-   <code>bash
-   ollama pull hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M
-   ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
-   ollama pull nomic-embed-text</code></p>
-</li>
-</ol>
-<hr />
-<h3 id="windows-installation">Windows Installation<a class="headerlink" href="#windows-installation" title="Permanent link">&para;</a></h3>
-<ol>
-<li>
-<p><strong>Install uv via PowerShell</strong>:
-   Open Windows PowerShell (Run as Administrator or standard user) and execute:
-   <code>powershell
-   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"</code></p>
-</li>
-<li>
-<p><strong>Install Lathe Tool</strong>:
-   <code>powershell
-   uv tool install lathe-agent</code></p>
-</li>
-<li>
-<p><strong>Install Ollama for Windows</strong>:
-   Download and install the official Windows setup from <a href="https://ollama.com/download/windows">ollama.com/download/windows</a>.</p>
-</li>
-<li>
-<p><strong>Pull Models in PowerShell</strong>:
-   <code>powershell
-   ollama pull hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M
-   ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
-   ollama pull nomic-embed-text</code></p>
-</li>
-<li>
-<p><strong>(Optional) Set Hugging Face Token in PowerShell</strong>:
-   ```powershell</p>
-<p>```</p>
-</li>
-</ol>
-<hr />
-<h3 id="verifying-with-lathe-doctor">Verifying with lathe doctor<a class="headerlink" href="#verifying-with-lathe-doctor" title="Permanent link">&para;</a></h3>
-<p>Lathe includes a built-in diagnostic suite that validates your runtime environment, local models, Git installation, and API keys.</p>
-<p>Run:</p>
+<p>Follow these steps in the macOS Terminal app. To open Terminal, press <code>Cmd + Space</code> to trigger Spotlight, type <code>Terminal</code>, and press <code>Enter</code>.</p>
+<h4 id="11-install-the-uv-package-manager">1.1 Install the <code>uv</code> Package Manager<a class="headerlink" href="#11-install-the-uv-package-manager" title="Permanent link">&para;</a></h4>
+<p>Install Astral <code>uv</code>, the high-performance package manager used to install and run Lathe in an isolated environment.</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-LsSf<span class="w"> </span>https://astral.sh/uv/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
+</code></pre></div>
+
+<p>Close your Terminal window and open a new one so your shell loads the <code>uv</code> executable.</p>
+<p><strong>✓ Check:</strong></p>
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>--version
+</code></pre></div>
+
+<p><em>Expected output:</em> <code>uv 0.x.x</code> (or newer).</p>
+<h4 id="12-install-apple-command-line-developer-tools-git">1.2 Install Apple Command Line Developer Tools (Git)<a class="headerlink" href="#12-install-apple-command-line-developer-tools-git" title="Permanent link">&para;</a></h4>
+<p>Install Git and macOS developer command-line utilities.</p>
+<div class="highlight"><pre><span></span><code>xcode-select<span class="w"> </span>--install
+</code></pre></div>
+
+<p>If a dialog appears, click <strong>Install</strong> and wait for the installer to finish. If already installed, the command informs you.</p>
+<p><strong>✓ Check:</strong></p>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>--version
+</code></pre></div>
+
+<p><em>Expected output:</em> <code>git version 2.x.x</code> (or newer).</p>
+<h4 id="13-install-lathe">1.3 Install Lathe<a class="headerlink" href="#13-install-lathe" title="Permanent link">&para;</a></h4>
+<p>Install the latest release of Lathe into an isolated global tool environment.</p>
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>git+https://github.com/AdityaSurse/lathe
+uv<span class="w"> </span>tool<span class="w"> </span>update-shell
+</code></pre></div>
+
+<p><em>(To install the stable PyPI release instead, run <code>uv tool install lathe-agent</code>.)</em></p>
+<p>Close and reopen your Terminal window so the <code>lathe</code> binary is added to your shell's <code>PATH</code>.</p>
+<p><strong>✓ Check:</strong></p>
+<div class="highlight"><pre><span></span><code>lathe<span class="w"> </span>--version
+</code></pre></div>
+
+<p><em>Expected output:</em> <code>lathe version 1.0.0</code> (or current version).</p>
+<h4 id="14-install-and-launch-ollama">1.4 Install and Launch Ollama<a class="headerlink" href="#14-install-and-launch-ollama" title="Permanent link">&para;</a></h4>
+<p>Download and install the Ollama local AI runtime for macOS.
+Download the official macOS installer from <a href="https://ollama.com/download">ollama.com/download</a> (or install via Homebrew with <code>brew install --cask ollama</code>). Launch the Ollama app from your <strong>Applications</strong> folder.</p>
+<p><strong>✓ Check:</strong>
+Confirm the llama icon appears in your top macOS menu bar, then run:</p>
+<div class="highlight"><pre><span></span><code>ollama<span class="w"> </span>--version
+</code></pre></div>
+
+<p><em>Expected output:</em> <code>ollama version is 0.x.x</code> (or newer).</p>
+<h4 id="15-check-available-ram">1.5 Check Available RAM<a class="headerlink" href="#15-check-available-ram" title="Permanent link">&para;</a></h4>
+<p>Print your machine's total physical memory in gigabytes to confirm which model tier to download.</p>
+<div class="highlight"><pre><span></span><code><span class="nb">echo</span><span class="w"> </span><span class="s2">"</span><span class="k">$((</span><span class="w"> </span><span class="k">$(</span>sysctl<span class="w"> </span>-n<span class="w"> </span>hw.memsize<span class="k">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="m">1024</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="m">1024</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="m">1024</span><span class="w"> </span><span class="k">))</span><span class="s2"> GB"</span>
+</code></pre></div>
+
+<p><strong>✓ Check:</strong>
+The terminal displays your total memory (e.g. <code>8 GB</code>, <code>16 GB</code>, <code>36 GB</code>, or <code>64 GB</code>).</p>
+<h4 id="16-download-models-for-your-ram-tier">1.6 Download Models for Your RAM Tier<a class="headerlink" href="#16-download-models-for-your-ram-tier" title="Permanent link">&para;</a></h4>
+<p>Download the pre-quantized language model weights to your machine via Ollama.</p>
+<p><strong>For 8 GB RAM Machines:</strong></p>
+<div class="highlight"><pre><span></span><code>ollama<span class="w"> </span>pull<span class="w"> </span>hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
+ollama<span class="w"> </span>pull<span class="w"> </span>gemma4:e2b
+ollama<span class="w"> </span>pull<span class="w"> </span>nomic-embed-text
+</code></pre></div>
+
+<p><strong>For 16 GB or Higher RAM Machines:</strong></p>
+<div class="highlight"><pre><span></span><code>ollama<span class="w"> </span>pull<span class="w"> </span>hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M
+ollama<span class="w"> </span>pull<span class="w"> </span>hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
+ollama<span class="w"> </span>pull<span class="w"> </span>nomic-embed-text
+</code></pre></div>
+
+<p><strong>✓ Check:</strong></p>
+<div class="highlight"><pre><span></span><code>ollama<span class="w"> </span>list
+</code></pre></div>
+
+<p><em>Expected output:</em> A table listing the downloaded model tags with their sizes.</p>
+<h4 id="17-configure-lathe-globally">1.7 Configure Lathe Globally<a class="headerlink" href="#17-configure-lathe-globally" title="Permanent link">&para;</a></h4>
+<p>Configure your global Lathe settings in <code>~/.config/lathe/lathe.toml</code> using the built-in preset command.</p>
+<p><strong>For 8 GB RAM (Fast Preset):</strong></p>
+<div class="highlight"><pre><span></span><code>lathe<span class="w"> </span>models<span class="w"> </span>preset<span class="w"> </span>fast<span class="w"> </span>--global
+</code></pre></div>
+
+<p><strong>For 16 GB+ RAM (Qwen Team Preset):</strong></p>
+<div class="highlight"><pre><span></span><code>lathe<span class="w"> </span>models<span class="w"> </span>preset<span class="w"> </span>qwen<span class="w"> </span>--global
+</code></pre></div>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Tip</div>
+**Manual Configuration Fallback:**
+If you prefer to configure manually, generate the default configuration file and open it in TextEdit:
+
+<div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>-p<span class="w"> </span>~/.config/lathe
+lathe<span class="w"> </span>config<span class="w"> </span>init<span class="w"> </span>--path<span class="w"> </span>~/.config/lathe/lathe.toml
+open<span class="w"> </span>-e<span class="w"> </span>~/.config/lathe/lathe.toml
+</code></pre></div>
+
+
+Ensure your `[roles.coder]` and `[roles.router]` point to your downloaded Ollama models:
+
+<div class="highlight"><pre><span></span><code><span class="k">[roles.coder]</span>
+<span class="n">backend</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"ollama"</span>
+<span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M"</span>
+
+<span class="k">[roles.router]</span>
+<span class="n">backend</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"ollama"</span>
+<span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M"</span>
+</code></pre></div>
+
+
+</div>
+
+<p><strong>✓ Check:</strong></p>
 <div class="highlight"><pre><span></span><code>lathe<span class="w"> </span>doctor
 </code></pre></div>
 
-<p><img alt="Lathe Doctor Output" src="file:///Users/adityasurse/Documents/lathe%20agent/assets/manual/images/doctor.png" /></p>
-<p>A healthy system displays:
-- <strong>Python</strong>: Pass (v3.11, v3.12, or v3.13)
-- <strong>Git</strong>: Pass (executable discovered)
-- <strong>Ollama Service</strong>: Pass (reachable at <code>http://localhost:11434</code>)
-- <strong>Ollama Models</strong>: Pass (detected coder and router models)
-- <strong>HF_TOKEN</strong>: Pass (masked token loaded from environment)</p>
+<p><em>Expected output:</em> A diagnostic table where Python, Git, and Ollama Service report <code>[Pass]</code>.</p>
+<h4 id="18-configure-optional-speed-settings">1.8 Configure Optional Speed Settings<a class="headerlink" href="#18-configure-optional-speed-settings" title="Permanent link">&para;</a></h4>
+<p>Speed up Ollama token generation and keep models warm in memory for 30 minutes.</p>
+<div class="highlight"><pre><span></span><code>launchctl<span class="w"> </span>setenv<span class="w"> </span>OLLAMA_KEEP_ALIVE<span class="w"> </span>30m
+launchctl<span class="w"> </span>setenv<span class="w"> </span>OLLAMA_FLASH_ATTENTION<span class="w"> </span><span class="m">1</span>
+launchctl<span class="w"> </span>setenv<span class="w"> </span>OLLAMA_KV_CACHE_TYPE<span class="w"> </span>q8_0
+</code></pre></div>
+
+<p>Quit Ollama from the top menu bar icon (click the llama icon → <strong>Quit Ollama</strong>) and reopen Ollama from your Applications folder.</p>
+<p><strong>✓ Check:</strong></p>
+<div class="highlight"><pre><span></span><code>lathe<span class="w"> </span>doctor
+</code></pre></div>
+
+<p><em>Expected output:</em> Ollama Service reports <code>[Pass] Online at http://localhost:11434</code>.</p>
+<h4 id="19-create-a-test-project-and-run-lathe">1.9 Create a Test Project and Run Lathe<a class="headerlink" href="#19-create-a-test-project-and-run-lathe" title="Permanent link">&para;</a></h4>
+<p>Always run Lathe inside a dedicated project directory with Git initialized.</p>
+<div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>-p<span class="w"> </span>~/lathe-playground<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>~/lathe-playground
+git<span class="w"> </span>init<span class="w"> </span>-b<span class="w"> </span>main
+cat<span class="w"> </span><span class="s">&lt;&lt; 'EOF' &gt; calc.py</span>
+<span class="s">def add(a, b):</span>
+<span class="s">    return a + b</span>
+<span class="s">EOF</span>
+git<span class="w"> </span>add<span class="w"> </span>calc.py
+git<span class="w"> </span>-c<span class="w"> </span>user.name<span class="o">=</span><span class="s2">"Tester"</span><span class="w"> </span>-c<span class="w"> </span>user.email<span class="o">=</span><span class="s2">"test@lathe.ai"</span><span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"initial commit"</span>
+lathe
+</code></pre></div>
+
+<p>When the <code>lathe&gt;</code> prompt appears, test your setup with your first message:</p>
+<div class="highlight"><pre><span></span><code>lathe&gt; what does calc.py do?
+</code></pre></div>
+
+<p>Type <code>/exit</code> or press <code>Ctrl + D</code> to exit the session.</p>
+<h4 id="110-optional-configure-hugging-face-token-remote-planner">1.10 Optional: Configure Hugging Face Token (Remote Planner)<a class="headerlink" href="#110-optional-configure-hugging-face-token-remote-planner" title="Permanent link">&para;</a></h4>
+<p>If you want to use cloud-based reasoning models (such as <code>DeepSeek-R1</code>) for high-level planning, configure a free Hugging Face token.
+1. Generate a free read-only token at <a href="https://huggingface.co/settings/tokens">huggingface.co/settings/tokens</a>.
+2. Save it to your <code>~/.zshrc</code> profile:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">echo</span><span class="w"> </span><span class="s1">'export HF_TOKEN="hf_your_token_here"'</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/.zshrc
+<span class="nb">source</span><span class="w"> </span>~/.zshrc
+</code></pre></div>
+
+<div class="callout callout-warning">
+<div class="callout-title">⚠️ Warning</div>
+Never commit `HF_TOKEN` into any repository or paste it into `lathe.toml`. Lathe loads tokens strictly from environment variables.
+</div>
+
+<div style="page-break-before: always;"></div>
+
+<h3 id="windows-installation">Windows Installation<a class="headerlink" href="#windows-installation" title="Permanent link">&para;</a></h3>
+<p>Follow these steps using <strong>Windows PowerShell</strong>. To open PowerShell, press the <code>Windows Key</code>, type <code>PowerShell</code>, and press <code>Enter</code>.</p>
+<div class="callout callout-caution">
+<div class="callout-title">🛑 Caution</div>
+**Do not use Command Prompt (`cmd.exe`).**
+Always use Windows PowerShell or PowerShell 7 (`pwsh`). Legacy `cmd.exe` does not support Unix-compatible scripting or UTF-8 formatting.
+</div>
+
+<h4 id="21-allow-local-script-execution">2.1 Allow Local Script Execution<a class="headerlink" href="#21-allow-local-script-execution" title="Permanent link">&para;</a></h4>
+<p>Enable running signed PowerShell scripts on your user account.</p>
+<div class="highlight"><pre><span></span><code><span class="nb">Set-ExecutionPolicy</span> <span class="n">-Scope</span> <span class="n">CurrentUser</span> <span class="n">RemoteSigned</span>
+</code></pre></div>
+
+<p>When prompted to confirm the execution policy change, type <code>Y</code> and press <code>Enter</code>.</p>
+<p><strong>✓ Check:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="nb">Get-ExecutionPolicy</span> <span class="n">-Scope</span> <span class="n">CurrentUser</span>
+</code></pre></div>
+
+<p><em>Expected output:</em> <code>RemoteSigned</code>.</p>
+<h4 id="22-install-the-uv-package-manager">2.2 Install the <code>uv</code> Package Manager<a class="headerlink" href="#22-install-the-uv-package-manager" title="Permanent link">&para;</a></h4>
+<p>Install Astral <code>uv</code> using the official Windows PowerShell installer script.</p>
+<div class="highlight"><pre><span></span><code><span class="n">powershell</span> <span class="n">-ExecutionPolicy</span> <span class="n">ByPass</span> <span class="n">-c</span> <span class="s2">"irm https://astral.sh/uv/install.ps1 | iex"</span>
+</code></pre></div>
+
+<p>Close your PowerShell window and open a new PowerShell window so <code>uv</code> is available on your path.</p>
+<p><strong>✓ Check:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="n">uv</span> <span class="p">-</span><span class="n">-version</span>
+</code></pre></div>
+
+<p><em>Expected output:</em> <code>uv 0.x.x</code> (or newer).</p>
+<h4 id="23-install-git-for-windows">2.3 Install Git for Windows<a class="headerlink" href="#23-install-git-for-windows" title="Permanent link">&para;</a></h4>
+<p>Install Git using the Windows Package Manager (<code>winget</code>).</p>
+<div class="highlight"><pre><span></span><code><span class="n">winget</span> <span class="n">install</span> <span class="p">-</span><span class="n">-id</span> <span class="n">Git</span><span class="p">.</span><span class="n">Git</span> <span class="n">-e</span>
+</code></pre></div>
+
+<p>Close and reopen your PowerShell window after installation completes.</p>
+<p><strong>✓ Check:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="n">git</span> <span class="p">-</span><span class="n">-version</span>
+</code></pre></div>
+
+<p><em>Expected output:</em> <code>git version 2.x.x.windows.x</code> (or newer).</p>
+<h4 id="24-install-lathe">2.4 Install Lathe<a class="headerlink" href="#24-install-lathe" title="Permanent link">&para;</a></h4>
+<p>Install Lathe in an isolated global tool environment and configure your shell path.</p>
+<div class="highlight"><pre><span></span><code><span class="n">uv</span> <span class="n">tool</span> <span class="n">install</span> <span class="n">git</span><span class="p">+</span><span class="n">https</span><span class="p">://</span><span class="n">github</span><span class="p">.</span><span class="n">com</span><span class="p">/</span><span class="n">AdityaSurse</span><span class="p">/</span><span class="n">lathe</span>
+<span class="n">uv</span> <span class="n">tool</span> <span class="nb">update-shell</span>
+</code></pre></div>
+
+<p><em>(To install the stable PyPI release instead, run <code>uv tool install lathe-agent</code>.)</em></p>
+<p>Close and reopen your PowerShell window.</p>
+<p><strong>✓ Check:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="n">lathe</span> <span class="p">-</span><span class="n">-version</span>
+</code></pre></div>
+
+<p><em>Expected output:</em> <code>lathe version 1.0.0</code> (or current version).</p>
+<h4 id="25-install-and-launch-ollama-for-windows">2.5 Install and Launch Ollama for Windows<a class="headerlink" href="#25-install-and-launch-ollama-for-windows" title="Permanent link">&para;</a></h4>
+<p>Install the Ollama local model runtime using <code>winget</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="n">winget</span> <span class="n">install</span> <span class="p">-</span><span class="n">-id</span> <span class="n">Ollama</span><span class="p">.</span><span class="n">Ollama</span> <span class="n">-e</span>
+</code></pre></div>
+
+<p><em>(Alternatively, download the official installer directly from <a href="https://ollama.com/download/windows">ollama.com/download/windows</a>.)</em></p>
+<p>Open Ollama from your Windows Start Menu. Confirm the llama icon appears in your Windows system tray (bottom-right corner).</p>
+<p><strong>✓ Check:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="n">ollama</span> <span class="p">-</span><span class="n">-version</span>
+</code></pre></div>
+
+<p><em>Expected output:</em> <code>ollama version is 0.x.x</code> (or newer).</p>
+<h4 id="26-check-available-ram">2.6 Check Available RAM<a class="headerlink" href="#26-check-available-ram" title="Permanent link">&para;</a></h4>
+<p>Print your computer's total physical memory in gigabytes.</p>
+<div class="highlight"><pre><span></span><code><span class="no">[math]</span><span class="p">::</span><span class="n">Round</span><span class="p">((</span><span class="nb">Get-CimInstance</span> <span class="n">Win32_ComputerSystem</span><span class="p">).</span><span class="n">TotalPhysicalMemory</span> <span class="p">/</span> <span class="n">1GB</span><span class="p">)</span>
+</code></pre></div>
+
+<p><strong>✓ Check:</strong>
+PowerShell outputs your total RAM (e.g. <code>8</code>, <code>16</code>, <code>32</code>, or <code>64</code>).</p>
+<h4 id="27-download-models-for-your-ram-tier">2.7 Download Models for Your RAM Tier<a class="headerlink" href="#27-download-models-for-your-ram-tier" title="Permanent link">&para;</a></h4>
+<p>Download the pre-quantized models matching your hardware tier.</p>
+<p><strong>For 8 GB RAM Systems:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="n">ollama</span> <span class="n">pull</span> <span class="n">hf</span><span class="p">.</span><span class="n">co</span><span class="p">/</span><span class="n">Qwen</span><span class="p">/</span><span class="n">Qwen2</span><span class="p">.</span><span class="n">5-Coder</span><span class="p">-</span><span class="n">1</span><span class="p">.</span><span class="n">5B-Instruct-GGUF</span><span class="p">:</span><span class="n">Q4_K_M</span>
+<span class="n">ollama</span> <span class="n">pull</span> <span class="n">gemma4</span><span class="p">:</span><span class="n">e2b</span>
+<span class="n">ollama</span> <span class="n">pull</span> <span class="n">nomic-embed-text</span>
+</code></pre></div>
+
+<p><strong>For 16 GB or Higher RAM Systems:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="n">ollama</span> <span class="n">pull</span> <span class="n">hf</span><span class="p">.</span><span class="n">co</span><span class="p">/</span><span class="n">bartowski</span><span class="p">/</span><span class="n">Qwen2</span><span class="p">.</span><span class="n">5-Coder</span><span class="p">-</span><span class="n">7B-Instruct-GGUF</span><span class="p">:</span><span class="n">Q4_K_M</span>
+<span class="n">ollama</span> <span class="n">pull</span> <span class="n">hf</span><span class="p">.</span><span class="n">co</span><span class="p">/</span><span class="n">Qwen</span><span class="p">/</span><span class="n">Qwen2</span><span class="p">.</span><span class="n">5-Coder</span><span class="p">-</span><span class="n">1</span><span class="p">.</span><span class="n">5B-Instruct-GGUF</span><span class="p">:</span><span class="n">Q4_K_M</span>
+<span class="n">ollama</span> <span class="n">pull</span> <span class="n">nomic-embed-text</span>
+</code></pre></div>
+
+<p><strong>✓ Check:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="n">ollama</span> <span class="n">list</span>
+</code></pre></div>
+
+<p><em>Expected output:</em> A table displaying your pulled models.</p>
+<h4 id="28-configure-lathe-globally">2.8 Configure Lathe Globally<a class="headerlink" href="#28-configure-lathe-globally" title="Permanent link">&para;</a></h4>
+<p>Apply a pre-tuned model configuration to your global settings file (<code>%USERPROFILE%\.config\lathe\lathe.toml</code>).</p>
+<p><strong>For 8 GB RAM (Fast Preset):</strong></p>
+<div class="highlight"><pre><span></span><code><span class="n">lathe</span> <span class="n">models</span> <span class="n">preset</span> <span class="n">fast</span> <span class="p">-</span><span class="n">-global</span>
+</code></pre></div>
+
+<p><strong>For 16 GB+ RAM (Qwen Team Preset):</strong></p>
+<div class="highlight"><pre><span></span><code><span class="n">lathe</span> <span class="n">models</span> <span class="n">preset</span> <span class="n">qwen</span> <span class="p">-</span><span class="n">-global</span>
+</code></pre></div>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Tip</div>
+**Manual Configuration Fallback:**
+You can also initialize and open your global configuration in Notepad:
+
+<div class="highlight"><pre><span></span><code><span class="nb">New-Item</span> <span class="n">-ItemType</span> <span class="n">Directory</span> <span class="n">-Force</span> <span class="n">-Path</span> <span class="s2">"$HOME\.config\lathe"</span>
+<span class="n">lathe</span> <span class="n">config</span> <span class="n">init</span> <span class="p">-</span><span class="n">-path</span> <span class="s2">"$HOME\.config\lathe\lathe.toml"</span>
+<span class="n">notepad</span> <span class="s2">"$HOME\.config\lathe\lathe.toml"</span>
+</code></pre></div>
+
+
+Verify that the model tags in `[roles.coder]` and `[roles.router]` match your installed models:
+
+<div class="highlight"><pre><span></span><code><span class="k">[roles.coder]</span>
+<span class="n">backend</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"ollama"</span>
+<span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M"</span>
+
+<span class="k">[roles.router]</span>
+<span class="n">backend</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"ollama"</span>
+<span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M"</span>
+</code></pre></div>
+
+
+</div>
+
+<p><strong>✓ Check:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="n">lathe</span> <span class="n">doctor</span>
+</code></pre></div>
+
+<p><em>Expected output:</em> Diagnostic checks report <code>[Pass]</code>.</p>
+<h4 id="29-configure-optional-speed-settings">2.9 Configure Optional Speed Settings<a class="headerlink" href="#29-configure-optional-speed-settings" title="Permanent link">&para;</a></h4>
+<p>Configure environment variables to optimize Ollama throughput and memory retention on Windows.</p>
+<div class="highlight"><pre><span></span><code><span class="n">setx</span> <span class="n">OLLAMA_KEEP_ALIVE</span> <span class="n">30m</span>
+<span class="n">setx</span> <span class="n">OLLAMA_FLASH_ATTENTION</span> <span class="n">1</span>
+<span class="n">setx</span> <span class="n">OLLAMA_KV_CACHE_TYPE</span> <span class="n">q8_0</span>
+</code></pre></div>
+
+<p>Right-click the llama icon in the Windows system tray, select <strong>Quit Ollama</strong>, and relaunch Ollama from the Start Menu.</p>
+<p><strong>✓ Check:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="n">lathe</span> <span class="n">doctor</span>
+</code></pre></div>
+
+<p><em>Expected output:</em> Ollama Service displays <code>[Pass] Online at http://localhost:11434</code>.</p>
+<h4 id="210-create-a-test-project-and-run-lathe">2.10 Create a Test Project and Run Lathe<a class="headerlink" href="#210-create-a-test-project-and-run-lathe" title="Permanent link">&para;</a></h4>
+<p>Initialize a clean project workspace and start an interactive session.</p>
+<div class="highlight"><pre><span></span><code><span class="nb">New-Item</span> <span class="n">-ItemType</span> <span class="n">Directory</span> <span class="n">-Force</span> <span class="n">-Path</span> <span class="s2">"$HOME\lathe-playground"</span>
+<span class="nb">Set-Location</span> <span class="s2">"$HOME\lathe-playground"</span>
+<span class="n">git</span> <span class="n">init</span> <span class="n">-b</span> <span class="n">main</span>
+<span class="nb">Set-Content</span> <span class="n">-Path</span> <span class="n">calc</span><span class="p">.</span><span class="n">py</span> <span class="n">-Value</span> <span class="sh">@"</span>
+<span class="sh">def add(a, b):</span>
+<span class="sh">    return a + b</span>
+<span class="sh">"@</span>
+<span class="n">git</span> <span class="n">add</span> <span class="n">calc</span><span class="p">.</span><span class="n">py</span>
+<span class="n">git</span> <span class="n">-c</span> <span class="n">user</span><span class="p">.</span><span class="n">name</span><span class="p">=</span><span class="s2">"Tester"</span> <span class="n">-c</span> <span class="n">user</span><span class="p">.</span><span class="n">email</span><span class="p">=</span><span class="s2">"test@lathe.ai"</span> <span class="n">commit</span> <span class="n">-m</span> <span class="s2">"initial commit"</span>
+<span class="n">lathe</span>
+</code></pre></div>
+
+<p>When the <code>lathe&gt;</code> prompt appears, ask a test question:</p>
+<div class="highlight"><pre><span></span><code>lathe&gt; what does calc.py do?
+</code></pre></div>
+
+<p>Type <code>/exit</code> or press <code>Ctrl + D</code> to exit.</p>
+<h4 id="211-optional-configure-hugging-face-token-remote-planner">2.11 Optional: Configure Hugging Face Token (Remote Planner)<a class="headerlink" href="#211-optional-configure-hugging-face-token-remote-planner" title="Permanent link">&para;</a></h4>
+<p>If using cloud reasoning models for planning, set your Hugging Face API key in your user environment:</p>
+<div class="highlight"><pre><span></span><code><span class="n">setx</span> <span class="n">HF_TOKEN</span> <span class="s2">"hf_your_token_here"</span>
+</code></pre></div>
+
+<p>Close and reopen your PowerShell window so the new environment variable is loaded.</p>
+<div style="page-break-before: always;"></div>
+
+<h3 id="linux-installation">Linux Installation<a class="headerlink" href="#linux-installation" title="Permanent link">&para;</a></h3>
+<p>Follow these steps on Ubuntu, Debian, Fedora, Arch Linux, or any modern Linux distribution.</p>
+<div class="callout callout-note">
+<div class="callout-title">ℹ️ Note</div>
+**Package Manager Notice:**
+The commands below use `apt` (Ubuntu/Debian). On **Fedora/RHEL**, substitute `sudo dnf install -y git curl`. On **Arch Linux**, substitute `sudo pacman -S --noconfirm git curl`.
+</div>
+
+<h4 id="31-install-system-prerequisites">3.1 Install System Prerequisites<a class="headerlink" href="#31-install-system-prerequisites" title="Permanent link">&para;</a></h4>
+<p>Install Git and Curl from your system's package repository.</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>apt<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>git<span class="w"> </span>curl
+</code></pre></div>
+
+<p><strong>✓ Check:</strong></p>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>--version<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>curl<span class="w"> </span>--version
+</code></pre></div>
+
+<p><em>Expected output:</em> Version lines for both <code>git</code> and <code>curl</code>.</p>
+<h4 id="32-install-the-uv-package-manager">3.2 Install the <code>uv</code> Package Manager<a class="headerlink" href="#32-install-the-uv-package-manager" title="Permanent link">&para;</a></h4>
+<p>Install Astral <code>uv</code> using the standalone shell script.</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-LsSf<span class="w"> </span>https://astral.sh/uv/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
+</code></pre></div>
+
+<p>Close and reopen your terminal (or run <code>source $HOME/.local/bin/env</code> if prompted).</p>
+<p><strong>✓ Check:</strong></p>
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>--version
+</code></pre></div>
+
+<p><em>Expected output:</em> <code>uv 0.x.x</code> (or newer).</p>
+<h4 id="33-install-lathe">3.3 Install Lathe<a class="headerlink" href="#33-install-lathe" title="Permanent link">&para;</a></h4>
+<p>Install the Lathe agent into an isolated global tool environment and update your shell path.</p>
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>git+https://github.com/AdityaSurse/lathe
+uv<span class="w"> </span>tool<span class="w"> </span>update-shell
+</code></pre></div>
+
+<p><em>(To install the stable PyPI release instead, run <code>uv tool install lathe-agent</code>.)</em></p>
+<p>Close and reopen your terminal.</p>
+<p><strong>✓ Check:</strong></p>
+<div class="highlight"><pre><span></span><code>lathe<span class="w"> </span>--version
+</code></pre></div>
+
+<p><em>Expected output:</em> <code>lathe version 1.0.0</code> (or current version).</p>
+<h4 id="34-install-and-enable-ollama">3.4 Install and Enable Ollama<a class="headerlink" href="#34-install-and-enable-ollama" title="Permanent link">&para;</a></h4>
+<p>Install Ollama as a system service using the official Linux installation script.</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://ollama.com/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
+</code></pre></div>
+
+<p><strong>✓ Check:</strong></p>
+<div class="highlight"><pre><span></span><code>ollama<span class="w"> </span>--version
+systemctl<span class="w"> </span>status<span class="w"> </span>ollama<span class="w"> </span>--no-pager
+</code></pre></div>
+
+<p><em>Expected output:</em> Ollama version and service status showing <code>active (running)</code>.</p>
+<h4 id="35-check-available-ram">3.5 Check Available RAM<a class="headerlink" href="#35-check-available-ram" title="Permanent link">&para;</a></h4>
+<p>Inspect your system memory to select the right model tier.</p>
+<div class="highlight"><pre><span></span><code>free<span class="w"> </span>-h
+</code></pre></div>
+
+<p><strong>✓ Check:</strong>
+Check the <code>Mem: total</code> line (e.g. <code>7.8Gi</code> or <code>15.5Gi</code> or <code>31.2Gi</code>).</p>
+<h4 id="36-download-models-for-your-ram-tier">3.6 Download Models for Your RAM Tier<a class="headerlink" href="#36-download-models-for-your-ram-tier" title="Permanent link">&para;</a></h4>
+<p>Download model weights matching your system capacity.</p>
+<p><strong>For 8 GB RAM Systems:</strong></p>
+<div class="highlight"><pre><span></span><code>ollama<span class="w"> </span>pull<span class="w"> </span>hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
+ollama<span class="w"> </span>pull<span class="w"> </span>gemma4:e2b
+ollama<span class="w"> </span>pull<span class="w"> </span>nomic-embed-text
+</code></pre></div>
+
+<p><strong>For 16 GB or Higher RAM Systems:</strong></p>
+<div class="highlight"><pre><span></span><code>ollama<span class="w"> </span>pull<span class="w"> </span>hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M
+ollama<span class="w"> </span>pull<span class="w"> </span>hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
+ollama<span class="w"> </span>pull<span class="w"> </span>nomic-embed-text
+</code></pre></div>
+
+<p><strong>✓ Check:</strong></p>
+<div class="highlight"><pre><span></span><code>ollama<span class="w"> </span>list
+</code></pre></div>
+
+<p><em>Expected output:</em> List of downloaded model tags and file sizes.</p>
+<h4 id="37-configure-lathe-globally">3.7 Configure Lathe Globally<a class="headerlink" href="#37-configure-lathe-globally" title="Permanent link">&para;</a></h4>
+<p>Apply your chosen model preset to your global configuration file (<code>~/.config/lathe/lathe.toml</code>).</p>
+<p><strong>For 8 GB RAM (Fast Preset):</strong></p>
+<div class="highlight"><pre><span></span><code>lathe<span class="w"> </span>models<span class="w"> </span>preset<span class="w"> </span>fast<span class="w"> </span>--global
+</code></pre></div>
+
+<p><strong>For 16 GB+ RAM (Qwen Team Preset):</strong></p>
+<div class="highlight"><pre><span></span><code>lathe<span class="w"> </span>models<span class="w"> </span>preset<span class="w"> </span>qwen<span class="w"> </span>--global
+</code></pre></div>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Tip</div>
+**Manual Configuration Fallback:**
+You can also create and edit the global configuration file directly:
+
+<div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>-p<span class="w"> </span>~/.config/lathe
+lathe<span class="w"> </span>config<span class="w"> </span>init<span class="w"> </span>--path<span class="w"> </span>~/.config/lathe/lathe.toml
+nano<span class="w"> </span>~/.config/lathe/lathe.toml
+</code></pre></div>
+
+
+Verify that `[roles.coder]` and `[roles.router]` specify your local Ollama models:
+
+<div class="highlight"><pre><span></span><code><span class="k">[roles.coder]</span>
+<span class="n">backend</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"ollama"</span>
+<span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M"</span>
+
+<span class="k">[roles.router]</span>
+<span class="n">backend</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"ollama"</span>
+<span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M"</span>
+</code></pre></div>
+
+
+</div>
+
+<p><strong>✓ Check:</strong></p>
+<div class="highlight"><pre><span></span><code>lathe<span class="w"> </span>doctor
+</code></pre></div>
+
+<p><em>Expected output:</em> All diagnostic checks show <code>[Pass]</code>.</p>
+<h4 id="38-configure-optional-speed-settings">3.8 Configure Optional Speed Settings<a class="headerlink" href="#38-configure-optional-speed-settings" title="Permanent link">&para;</a></h4>
+<p>Configure Ollama service environment variables for 30-minute model persistence and flash attention.
+Run <code>sudo systemctl edit ollama</code> and add the following lines:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[Service]</span>
+<span class="na">Environment</span><span class="o">=</span><span class="s">"OLLAMA_KEEP_ALIVE=30m"</span>
+<span class="na">Environment</span><span class="o">=</span><span class="s">"OLLAMA_FLASH_ATTENTION=1"</span>
+<span class="na">Environment</span><span class="o">=</span><span class="s">"OLLAMA_KV_CACHE_TYPE=q8_0"</span>
+</code></pre></div>
+
+<p>Save the file and restart the Ollama daemon:</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>systemctl<span class="w"> </span>restart<span class="w"> </span>ollama
+</code></pre></div>
+
+<p><strong>✓ Check:</strong></p>
+<div class="highlight"><pre><span></span><code>systemctl<span class="w"> </span>status<span class="w"> </span>ollama<span class="w"> </span>--no-pager
+</code></pre></div>
+
+<p><em>Expected output:</em> <code>Active: active (running)</code>.</p>
+<h4 id="39-create-a-test-project-and-run-lathe">3.9 Create a Test Project and Run Lathe<a class="headerlink" href="#39-create-a-test-project-and-run-lathe" title="Permanent link">&para;</a></h4>
+<p>Set up a clean test directory and launch your first session.</p>
+<div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>-p<span class="w"> </span>~/lathe-playground<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>~/lathe-playground
+git<span class="w"> </span>init<span class="w"> </span>-b<span class="w"> </span>main
+cat<span class="w"> </span><span class="s">&lt;&lt; 'EOF' &gt; calc.py</span>
+<span class="s">def add(a, b):</span>
+<span class="s">    return a + b</span>
+<span class="s">EOF</span>
+git<span class="w"> </span>add<span class="w"> </span>calc.py
+git<span class="w"> </span>-c<span class="w"> </span>user.name<span class="o">=</span><span class="s2">"Tester"</span><span class="w"> </span>-c<span class="w"> </span>user.email<span class="o">=</span><span class="s2">"test@lathe.ai"</span><span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"initial commit"</span>
+lathe
+</code></pre></div>
+
+<p>At the <code>lathe&gt;</code> prompt, ask:</p>
+<div class="highlight"><pre><span></span><code>lathe&gt; what does calc.py do?
+</code></pre></div>
+
+<p>Type <code>/exit</code> or press <code>Ctrl + D</code> to exit.</p>
+<h4 id="310-optional-configure-hugging-face-token-remote-planner">3.10 Optional: Configure Hugging Face Token (Remote Planner)<a class="headerlink" href="#310-optional-configure-hugging-face-token-remote-planner" title="Permanent link">&para;</a></h4>
+<p>If you wish to use remote planning models, add your Hugging Face API key to <code>~/.bashrc</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">echo</span><span class="w"> </span><span class="s1">'export HF_TOKEN="hf_your_token_here"'</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/.bashrc
+<span class="nb">source</span><span class="w"> </span>~/.bashrc
+</code></pre></div>
+
+<hr />
+<h3 id="updating-lathe">Updating Lathe<a class="headerlink" href="#updating-lathe" title="Permanent link">&para;</a></h3>
+<p>To update Lathe to the latest version across any operating system, use <code>uv tool</code>:</p>
+<p><strong>Updating from GitHub (Latest Development Version):</strong></p>
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>--force<span class="w"> </span>git+https://github.com/AdityaSurse/lathe
+</code></pre></div>
+
+<p><em>(On Windows PowerShell, run the exact same command).</em></p>
+<p><strong>Updating from PyPI (Stable Version):</strong></p>
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>tool<span class="w"> </span>upgrade<span class="w"> </span>lathe-agent
+</code></pre></div>
+
+<p><strong>✓ Check:</strong></p>
+<div class="highlight"><pre><span></span><code>lathe<span class="w"> </span>--version
+</code></pre></div>
+
+<p><em>Expected output:</em> Displays the newly updated version string.</p>
+<hr />
+<h3 id="uninstalling-lathe">Uninstalling Lathe<a class="headerlink" href="#uninstalling-lathe" title="Permanent link">&para;</a></h3>
+<p>To cleanly remove Lathe, its configuration files, and downloaded model weights from your system:</p>
+<h4 id="1-uninstall-the-lathe-cli-executable">1. Uninstall the Lathe CLI Executable<a class="headerlink" href="#1-uninstall-the-lathe-cli-executable" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>tool<span class="w"> </span>uninstall<span class="w"> </span>lathe-agent
+</code></pre></div>
+
+<h4 id="2-remove-configuration-and-cache-directories">2. Remove Configuration and Cache Directories<a class="headerlink" href="#2-remove-configuration-and-cache-directories" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong>macOS / Linux:</strong>
+  <code>bash
+  rm -rf ~/.config/lathe ~/.lathe</code></li>
+<li><strong>Windows (PowerShell):</strong>
+  <code>powershell
+  Remove-Item -Recurse -Force "$HOME\.config\lathe", "$HOME\.lathe"</code></li>
+</ul>
+<h4 id="3-optional-remove-ollama-models-to-free-disk-space">3. (Optional) Remove Ollama Models to Free Disk Space<a class="headerlink" href="#3-optional-remove-ollama-models-to-free-disk-space" title="Permanent link">&para;</a></h4>
+<p>If you wish to delete downloaded model weights:</p>
+<div class="highlight"><pre><span></span><code>ollama<span class="w"> </span>rm<span class="w"> </span>hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M
+ollama<span class="w"> </span>rm<span class="w"> </span>hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
+ollama<span class="w"> </span>rm<span class="w"> </span>nomic-embed-text
+</code></pre></div>
+
+<hr />
+<h3 id="installation-troubleshooting">Installation Troubleshooting<a class="headerlink" href="#installation-troubleshooting" title="Permanent link">&para;</a></h3>
+<p>If you encounter an issue during installation, look up the symptom in the table below:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Symptom / Error</th>
+<th style="text-align: left;">Root Cause</th>
+<th style="text-align: left;">Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong><code>lathe: command not found</code></strong> or <strong><code>'lathe' is not recognized</code></strong></td>
+<td style="text-align: left;">The <code>~/.local/bin</code> directory (or Windows tool directory) is not in your shell's <code>PATH</code>.</td>
+<td style="text-align: left;">Run <code>uv tool update-shell</code>, then close and reopen your terminal or PowerShell window.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>running scripts is disabled on this system</code></strong> (Windows)</td>
+<td style="text-align: left;">Windows PowerShell restricts execution of remote scripts by default.</td>
+<td style="text-align: left;">Run <code>Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</code> in PowerShell, confirm with <code>Y</code>, and retry.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>Ollama Service: Fail</code></strong> or <strong><code>Connection refused</code></strong></td>
+<td style="text-align: left;">The Ollama background daemon is not running.</td>
+<td style="text-align: left;"><strong>macOS</strong>: Open Ollama from Applications.<br><strong>Windows</strong>: Open Ollama from Start Menu.<br><strong>Linux</strong>: Run <code>sudo systemctl start ollama</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>sharded GGUF</code></strong> or <strong><code>model not found</code></strong> error during pull</td>
+<td style="text-align: left;">Upstream <code>hf.co/Qwen/</code> repository distributes sharded weights that Ollama cannot assemble.</td>
+<td style="text-align: left;">Always pull the single-file GGUF quant from bartowski: <code>ollama pull hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>ModuleNotFoundError</code></strong> after upgrading Python or Lathe</td>
+<td style="text-align: left;">Broken virtual environment or missing dependency in tool cache.</td>
+<td style="text-align: left;">Run <code>uv tool install --force git+https://github.com/AdityaSurse/lathe</code> to recreate the isolated environment.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Lathe freezes or prints <code>Not in a project folder</code> on startup</strong></td>
+<td style="text-align: left;">You launched Lathe from your home directory (<code>~</code>) or root (<code>/</code>).</td>
+<td style="text-align: left;">Lathe protects your home folder from accidental file edits. Create or <code>cd</code> into a project folder (e.g. <code>cd ~/lathe-playground</code>).</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Token generation is very slow (&lt; 5 tokens/sec)</strong></td>
+<td style="text-align: left;">Model is too large for your RAM, or Ollama is swapping weights to disk.</td>
+<td style="text-align: left;">Switch to the fast preset (<code>lathe models preset fast --global</code>), use the 1.5B/2B models, and configure speed settings (<code>OLLAMA_KEEP_ALIVE=30m</code>, <code>OLLAMA_FLASH_ATTENTION=1</code>).</td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h2 id="4-quick-start-first-session-in-5-minutes">4. Quick Start: First Session in 5 Minutes<a class="headerlink" href="#4-quick-start-first-session-in-5-minutes" title="Permanent link">&para;</a></h2>
 <p>Navigate to any existing code repository or create a clean testing folder:</p>

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import pytest
@@ -268,6 +269,14 @@ def test_permission_engine_yolo_warning_and_approval(tmp_path: Path) -> None:
     assert engine.warned_yolo is True
 
 
+def test_permission_engine_non_interactive_raises(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """When stdin is not a TTY and no input_handler is provided, raise RuntimeError."""
+    monkeypatch.setattr("sys.stdin.isatty", lambda: False)
+    engine = PermissionEngine(tmp_path)
+    with pytest.raises(RuntimeError, match="Cannot prompt for permission in non-interactive environment"):
+        engine.check_permission(run_shell, {"command": "git status"})
+
+
 # =====================================================================
 # 5. ShellTool Execution & Subprocess Tests
 # =====================================================================
@@ -277,7 +286,7 @@ def test_permission_engine_yolo_warning_and_approval(tmp_path: Path) -> None:
 async def test_run_shell_basic_execution(tmp_path: Path) -> None:
     """Verify live subprocess execution and return code handling."""
     ctx = ToolContext(workspace_root=tmp_path)
-    res = await run_shell.run({"command": "python -c \"print('lathe shell works')\""}, ctx=ctx)
+    res = await run_shell.run({"command": f'"{sys.executable}" -c "print(\'lathe shell works\')"' }, ctx=ctx)
     assert res.ok is True
     assert "lathe shell works" in res.output
     assert res.metadata["exit_code"] == 0
@@ -288,7 +297,7 @@ async def test_run_shell_non_zero_exit_code(tmp_path: Path) -> None:
     """Verify non-zero exit code reporting."""
     ctx = ToolContext(workspace_root=tmp_path)
     res = await run_shell.run(
-        {"command": "python -c \"import sys; print('fail'); sys.exit(7)\""}, ctx=ctx
+        {"command": f'"{sys.executable}" -c "import sys; print(\'fail\'); sys.exit(7)"'}, ctx=ctx
     )
     assert res.ok is False
     assert "fail" in res.output
@@ -317,7 +326,7 @@ async def test_run_shell_scrubs_secrets_from_child_process(
 
     ctx = ToolContext(workspace_root=tmp_path)
     cmd = (
-        'python -c "import os; '
+        f'"{sys.executable}" -c "import os; '
         "print('HF:', os.environ.get('HF_TOKEN')); "
         "print('SAFE:', os.environ.get('SAFE_VAR'))\""
     )
@@ -333,7 +342,7 @@ async def test_run_shell_timeout_kills_process_group(tmp_path: Path) -> None:
     ctx = ToolContext(workspace_root=tmp_path)
     # Command that sleeps for 10 seconds, but timeout is set to 1 second
     res = await run_shell.run(
-        {"command": 'python -c "import time; time.sleep(10)"', "timeout": 1}, ctx=ctx
+        {"command": f'"{sys.executable}" -c "import time; time.sleep(10)"', "timeout": 1}, ctx=ctx
     )
     assert res.ok is False
     assert "timed out after 1s" in (res.error or "")

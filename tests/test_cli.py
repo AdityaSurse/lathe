@@ -1,5 +1,6 @@
 """Tests for the lathe CLI entry point and commands."""
 
+import pytest
 from typer.testing import CliRunner
 
 from lathe import __version__
@@ -16,9 +17,10 @@ def test_lathe_version() -> None:
     assert __version__ in result.stdout
 
 
+@pytest.mark.slow
 def test_lathe_doctor() -> None:
     """Verify that `lathe doctor` runs diagnostics without unhandled exceptions."""
-    result = runner.invoke(app, ["doctor"])
+    result = runner.invoke(app, ["doctor"], input="y\n")
     assert result.exit_code == 0
     assert "Python" in result.stdout
     assert "Git" in result.stdout
@@ -28,7 +30,7 @@ def test_lathe_doctor() -> None:
 
 def test_lathe_tools_command() -> None:
     """Verify that `lathe tools` and `lathe tool` display registered workspace tools."""
-    res_tools = runner.invoke(app, ["tools"])
+    res_tools = runner.invoke(app, ["tools"], input="y\n")
     assert res_tools.exit_code == 0
     assert "Lathe Workspace Tools" in res_tools.stdout
     assert "edit_file" in res_tools.stdout
@@ -36,16 +38,16 @@ def test_lathe_tools_command() -> None:
     assert "git_status" in res_tools.stdout
     assert "git_commit" in res_tools.stdout
 
-    res_tool = runner.invoke(app, ["tool"])
+    res_tool = runner.invoke(app, ["tool"], input="y\n")
     assert res_tool.exit_code == 0
     assert "Lathe Workspace Tools" in res_tool.stdout
 
-    res_inspect = runner.invoke(app, ["tools", "edit_file"])
+    res_inspect = runner.invoke(app, ["tools", "edit_file"], input="y\n")
     assert res_inspect.exit_code == 0
     assert "Tool: edit_file" in res_inspect.stdout
     assert "Parameters Schema:" in res_inspect.stdout
 
-    res_shell = runner.invoke(app, ["tools", "run_shell"])
+    res_shell = runner.invoke(app, ["tools", "run_shell"], input="y\n")
     assert res_shell.exit_code == 0
     assert "Tool: run_shell" in res_shell.stdout
     assert "Risk Level: execute" in res_shell.stdout

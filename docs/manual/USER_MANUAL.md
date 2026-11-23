@@ -12,10 +12,13 @@ Version 1.0.0 · November 2026
 1. [What is Lathe](#1-what-is-lathe)
 2. [System Requirements](#2-system-requirements)
 3. [Installation Guide](#3-installation-guide)
-   - [macOS](#macos-installation)
-   - [Linux](#linux-installation)
-   - [Windows](#windows-installation)
-   - [Verifying with lathe doctor](#verifying-with-lathe-doctor)
+   - [Before You Start](#before-you-start)
+   - [macOS Installation](#macos-installation)
+   - [Windows Installation](#windows-installation)
+   - [Linux Installation](#linux-installation)
+   - [Updating Lathe](#updating-lathe)
+   - [Uninstalling Lathe](#uninstalling-lathe)
+   - [Installation Troubleshooting](#installation-troubleshooting)
 4. [Quick Start: First Session in 5 Minutes](#4-quick-start-first-session-in-5-minutes)
 5. [Core Concepts](#5-core-concepts)
    - [Model Roles: Planner, Coder, Reviewer, Router](#model-roles)
@@ -117,128 +120,644 @@ Lathe runs on standard modern desktop and server hardware. Because Lathe uses qu
 
 ## 3. Installation Guide
 
-Lathe is packaged as a standalone Python distribution installable with Astral's ultra-fast `uv` package manager, `pipx`, or standard shell one-liners.
+This chapter walks you step-by-step through setting up Lathe on your computer. Even if you have never used a command-line terminal before, you can follow along by copy-pasting the exact commands below in order.
+
+---
+
+### Before You Start
+
+Review the hardware and software prerequisites below before downloading models or installing Lathe.
+
+#### Hardware & System Requirements
+
+| Requirement | Minimum | Recommended | Notes |
+| :--- | :--- | :--- | :--- |
+| **Operating System** | macOS 12+, Windows 10/11, or modern Linux | macOS 14+ (Apple Silicon), Windows 11, Ubuntu 22.04+ | 64-bit OS required across all platforms. |
+| **System RAM** | 8 GB Unified Memory / RAM | 16 GB+ Unified Memory / RAM | Models run in RAM / VRAM via Ollama. |
+| **Free Disk Space** | 10 GB SSD | 15–25 GB SSD | Needed for model weights and tool caching. |
+| **Internet Access** | Broadband (initial setup only) | Broadband (initial setup only) | Needed once for downloads; runtime execution is 100% offline. |
+
+#### Which Models for My RAM?
+
+Lathe uses Ollama to run compact, quantized language models directly on your hardware. Pick the tier matching your available RAM:
+
+| System RAM | Recommended Team / Preset | Coder Model | Router Model | Embeddings Model |
+| :--- | :--- | :--- | :--- | :--- |
+| **8 GB RAM** | **Fast / Lightweight** (`fast`) | `gemma4:e2b` or `Qwen2.5-Coder-1.5B` | `gemma4:e2b` | `nomic-embed-text` |
+| **16 GB RAM** | **Qwen Team** (`qwen`) | `Qwen2.5-Coder-7B` (bartowski) | `Qwen2.5-Coder-1.5B` | `nomic-embed-text` |
+| **32 GB+ RAM** | **Reasoning Team** (`qwen` or `mixed`) | `Qwen2.5-Coder-7B` or `32B` | `Qwen2.5-Coder-1.5B` | `nomic-embed-text` + local 7B planner |
+
+> [!WARNING]
+> **Always use the single-file bartowski 7B model tag:**
+> When downloading the 7B coder model, always pull `hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M`. Never pull `hf.co/Qwen/Qwen2.5-Coder-7B-Instruct-GGUF` directly—the upstream Qwen repository distributes sharded split files that Ollama cannot assemble.
+
+<div style="page-break-before: always;"></div>
 
 ### macOS Installation
 
-1. **Install Homebrew and uv** (if not already installed):
-   ```bash
-   # Install uv via Homebrew or official Astral script
-   brew install uv
-   # Or: curl -LsSf https://astral.sh/uv/install.sh | sh
-   ```
+Follow these steps in the macOS Terminal app. To open Terminal, press `Cmd + Space` to trigger Spotlight, type `Terminal`, and press `Enter`.
 
-2. **Install Lathe Tool**:
-   ```bash
-   uv tool install lathe-agent
-   ```
-   *(To install with model merging and sentence-transformer embeddings extras:)*
-   ```bash
-   uv tool install "lathe-agent[merge,embeddings]"
-   ```
+#### 1.1 Install the `uv` Package Manager
+Install Astral `uv`, the high-performance package manager used to install and run Lathe in an isolated environment.
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+Close your Terminal window and open a new one so your shell loads the `uv` executable.
 
-3. **Install and Start Ollama**:
-   ```bash
-   brew install --cask ollama
-   # Launch Ollama in the background
-   ollama serve
-   ```
+**✓ Check:**
+```bash
+uv --version
+```
+*Expected output:* `uv 0.x.x` (or newer).
 
-4. **Pull Recommended Models**:
-   ```bash
-   # Primary Coder model (7B GGUF single-file quant)
-   ollama pull hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M
+#### 1.2 Install Apple Command Line Developer Tools (Git)
+Install Git and macOS developer command-line utilities.
+```bash
+xcode-select --install
+```
+If a dialog appears, click **Install** and wait for the installer to finish. If already installed, the command informs you.
 
-   # Lightweight Router model (1.5B GGUF)
-   ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
+**✓ Check:**
+```bash
+git --version
+```
+*Expected output:* `git version 2.x.x` (or newer).
 
-   # Fast embeddings model for semantic code search
-   ollama pull nomic-embed-text
-   ```
+#### 1.3 Install Lathe
+Install the latest release of Lathe into an isolated global tool environment.
+```bash
+uv tool install git+https://github.com/AdityaSurse/lathe
+uv tool update-shell
+```
+*(To install the stable PyPI release instead, run `uv tool install lathe-agent`.)*
 
-5. **(Optional) Configure Hugging Face API Token**:
-   If using cloud-hosted inference for deep reasoning planner models (e.g. `DeepSeek-R1`), obtain a free access token from [Hugging Face Settings](https://huggingface.co/settings/tokens) and export it:
-   ```bash
-   echo 'HF_TOKEN="hf_your_personal_access_token_here"' >> ~/.zshrc
-   source ~/.zshrc
-   ```
+Close and reopen your Terminal window so the `lathe` binary is added to your shell's `PATH`.
 
----
+**✓ Check:**
+```bash
+lathe --version
+```
+*Expected output:* `lathe version 1.0.0` (or current version).
 
-### Linux Installation
+#### 1.4 Install and Launch Ollama
+Download and install the Ollama local AI runtime for macOS.
+Download the official macOS installer from [ollama.com/download](https://ollama.com/download) (or install via Homebrew with `brew install --cask ollama`). Launch the Ollama app from your **Applications** folder.
 
-1. **Install uv**:
-   ```bash
-   curl -LsSf https://astral.sh/uv/install.sh | sh
-   export PATH="$HOME/.local/bin:$PATH"
-   ```
+**✓ Check:**
+Confirm the llama icon appears in your top macOS menu bar, then run:
+```bash
+ollama --version
+```
+*Expected output:* `ollama version is 0.x.x` (or newer).
 
-2. **Install Lathe**:
-   ```bash
-   uv tool install lathe-agent
-   ```
+#### 1.5 Check Available RAM
+Print your machine's total physical memory in gigabytes to confirm which model tier to download.
+```bash
+echo "$(( $(sysctl -n hw.memsize) / 1024 / 1024 / 1024 )) GB"
+```
+**✓ Check:**
+The terminal displays your total memory (e.g. `8 GB`, `16 GB`, `36 GB`, or `64 GB`).
 
-3. **Install Ollama**:
-   ```bash
-   curl -fsSL https://ollama.com/install.sh | sh
-   ```
+#### 1.6 Download Models for Your RAM Tier
+Download the pre-quantized language model weights to your machine via Ollama.
 
-4. **Pull Default Models**:
-   ```bash
-   ollama pull hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M
-   ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
-   ollama pull nomic-embed-text
-   ```
+**For 8 GB RAM Machines:**
+```bash
+ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
+ollama pull gemma4:e2b
+ollama pull nomic-embed-text
+```
 
----
+**For 16 GB or Higher RAM Machines:**
+```bash
+ollama pull hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M
+ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
+ollama pull nomic-embed-text
+```
 
-### Windows Installation
+**✓ Check:**
+```bash
+ollama list
+```
+*Expected output:* A table listing the downloaded model tags with their sizes.
 
-1. **Install uv via PowerShell**:
-   Open Windows PowerShell (Run as Administrator or standard user) and execute:
-   ```powershell
-   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-   ```
+#### 1.7 Configure Lathe Globally
+Configure your global Lathe settings in `~/.config/lathe/lathe.toml` using the built-in preset command.
 
-2. **Install Lathe Tool**:
-   ```powershell
-   uv tool install lathe-agent
-   ```
+**For 8 GB RAM (Fast Preset):**
+```bash
+lathe models preset fast --global
+```
 
-3. **Install Ollama for Windows**:
-   Download and install the official Windows setup from [ollama.com/download/windows](https://ollama.com/download/windows).
+**For 16 GB+ RAM (Qwen Team Preset):**
+```bash
+lathe models preset qwen --global
+```
 
-4. **Pull Models in PowerShell**:
-   ```powershell
-   ollama pull hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M
-   ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
-   ollama pull nomic-embed-text
-   ```
+> [!TIP]
+> **Manual Configuration Fallback:**
+> If you prefer to configure manually, generate the default configuration file and open it in TextEdit:
+> ```bash
+> mkdir -p ~/.config/lathe
+> lathe config init --path ~/.config/lathe/lathe.toml
+> open -e ~/.config/lathe/lathe.toml
+> ```
+> Ensure your `[roles.coder]` and `[roles.router]` point to your downloaded Ollama models:
+> ```toml
+> [roles.coder]
+> backend = "ollama"
+> model = "hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M"
+> 
+> [roles.router]
+> backend = "ollama"
+> model = "hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M"
+> ```
 
-5. **(Optional) Set Hugging Face Token in PowerShell**:
-   ```powershell
-   [System.Environment]::SetEnvironmentVariable('HF_TOKEN', 'hf_your_token_here', 'User')
-   ```
-
----
-
-### Verifying with lathe doctor
-
-Lathe includes a built-in diagnostic suite that validates your runtime environment, local models, Git installation, and API keys.
-
-Run:
+**✓ Check:**
 ```bash
 lathe doctor
 ```
+*Expected output:* A diagnostic table where Python, Git, and Ollama Service report `[Pass]`.
 
-![Lathe Doctor Output](../../assets/manual/images/doctor.png)
+#### 1.8 Configure Optional Speed Settings
+Speed up Ollama token generation and keep models warm in memory for 30 minutes.
+```bash
+launchctl setenv OLLAMA_KEEP_ALIVE 30m
+launchctl setenv OLLAMA_FLASH_ATTENTION 1
+launchctl setenv OLLAMA_KV_CACHE_TYPE q8_0
+```
+Quit Ollama from the top menu bar icon (click the llama icon → **Quit Ollama**) and reopen Ollama from your Applications folder.
 
-A healthy system displays:
-- **Python**: Pass (v3.11, v3.12, or v3.13)
-- **Git**: Pass (executable discovered)
-- **Ollama Service**: Pass (reachable at `http://localhost:11434`)
-- **Ollama Models**: Pass (detected coder and router models)
-- **HF_TOKEN**: Pass (masked token loaded from environment)
+**✓ Check:**
+```bash
+lathe doctor
+```
+*Expected output:* Ollama Service reports `[Pass] Online at http://localhost:11434`.
+
+#### 1.9 Create a Test Project and Run Lathe
+Always run Lathe inside a dedicated project directory with Git initialized.
+```bash
+mkdir -p ~/lathe-playground && cd ~/lathe-playground
+git init -b main
+cat << 'EOF' > calc.py
+def add(a, b):
+    return a + b
+EOF
+git add calc.py
+git -c user.name="Tester" -c user.email="test@lathe.ai" commit -m "initial commit"
+lathe
+```
+When the `lathe>` prompt appears, test your setup with your first message:
+```text
+lathe> what does calc.py do?
+```
+Type `/exit` or press `Ctrl + D` to exit the session.
+
+#### 1.10 Optional: Configure Hugging Face Token (Remote Planner)
+If you want to use cloud-based reasoning models (such as `DeepSeek-R1`) for high-level planning, configure a free Hugging Face token.
+1. Generate a free read-only token at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens).
+2. Save it to your `~/.zshrc` profile:
+```bash
+echo 'export HF_TOKEN="hf_your_token_here"' >> ~/.zshrc
+source ~/.zshrc
+```
+> [!WARNING]
+> Never commit `HF_TOKEN` into any repository or paste it into `lathe.toml`. Lathe loads tokens strictly from environment variables.
+
+<div style="page-break-before: always;"></div>
+
+### Windows Installation
+
+Follow these steps using **Windows PowerShell**. To open PowerShell, press the `Windows Key`, type `PowerShell`, and press `Enter`.
+
+> [!CAUTION]
+> **Do not use Command Prompt (`cmd.exe`).**
+> Always use Windows PowerShell or PowerShell 7 (`pwsh`). Legacy `cmd.exe` does not support Unix-compatible scripting or UTF-8 formatting.
+
+#### 2.1 Allow Local Script Execution
+Enable running signed PowerShell scripts on your user account.
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+When prompted to confirm the execution policy change, type `Y` and press `Enter`.
+
+**✓ Check:**
+```powershell
+Get-ExecutionPolicy -Scope CurrentUser
+```
+*Expected output:* `RemoteSigned`.
+
+#### 2.2 Install the `uv` Package Manager
+Install Astral `uv` using the official Windows PowerShell installer script.
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+Close your PowerShell window and open a new PowerShell window so `uv` is available on your path.
+
+**✓ Check:**
+```powershell
+uv --version
+```
+*Expected output:* `uv 0.x.x` (or newer).
+
+#### 2.3 Install Git for Windows
+Install Git using the Windows Package Manager (`winget`).
+```powershell
+winget install --id Git.Git -e
+```
+Close and reopen your PowerShell window after installation completes.
+
+**✓ Check:**
+```powershell
+git --version
+```
+*Expected output:* `git version 2.x.x.windows.x` (or newer).
+
+#### 2.4 Install Lathe
+Install Lathe in an isolated global tool environment and configure your shell path.
+```powershell
+uv tool install git+https://github.com/AdityaSurse/lathe
+uv tool update-shell
+```
+*(To install the stable PyPI release instead, run `uv tool install lathe-agent`.)*
+
+Close and reopen your PowerShell window.
+
+**✓ Check:**
+```powershell
+lathe --version
+```
+*Expected output:* `lathe version 1.0.0` (or current version).
+
+#### 2.5 Install and Launch Ollama for Windows
+Install the Ollama local model runtime using `winget`.
+```powershell
+winget install --id Ollama.Ollama -e
+```
+*(Alternatively, download the official installer directly from [ollama.com/download/windows](https://ollama.com/download/windows).)*
+
+Open Ollama from your Windows Start Menu. Confirm the llama icon appears in your Windows system tray (bottom-right corner).
+
+**✓ Check:**
+```powershell
+ollama --version
+```
+*Expected output:* `ollama version is 0.x.x` (or newer).
+
+#### 2.6 Check Available RAM
+Print your computer's total physical memory in gigabytes.
+```powershell
+[math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1GB)
+```
+**✓ Check:**
+PowerShell outputs your total RAM (e.g. `8`, `16`, `32`, or `64`).
+
+#### 2.7 Download Models for Your RAM Tier
+Download the pre-quantized models matching your hardware tier.
+
+**For 8 GB RAM Systems:**
+```powershell
+ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
+ollama pull gemma4:e2b
+ollama pull nomic-embed-text
+```
+
+**For 16 GB or Higher RAM Systems:**
+```powershell
+ollama pull hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M
+ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
+ollama pull nomic-embed-text
+```
+
+**✓ Check:**
+```powershell
+ollama list
+```
+*Expected output:* A table displaying your pulled models.
+
+#### 2.8 Configure Lathe Globally
+Apply a pre-tuned model configuration to your global settings file (`%USERPROFILE%\.config\lathe\lathe.toml`).
+
+**For 8 GB RAM (Fast Preset):**
+```powershell
+lathe models preset fast --global
+```
+
+**For 16 GB+ RAM (Qwen Team Preset):**
+```powershell
+lathe models preset qwen --global
+```
+
+> [!TIP]
+> **Manual Configuration Fallback:**
+> You can also initialize and open your global configuration in Notepad:
+> ```powershell
+> New-Item -ItemType Directory -Force -Path "$HOME\.config\lathe"
+> lathe config init --path "$HOME\.config\lathe\lathe.toml"
+> notepad "$HOME\.config\lathe\lathe.toml"
+> ```
+> Verify that the model tags in `[roles.coder]` and `[roles.router]` match your installed models:
+> ```toml
+> [roles.coder]
+> backend = "ollama"
+> model = "hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M"
+> 
+> [roles.router]
+> backend = "ollama"
+> model = "hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M"
+> ```
+
+**✓ Check:**
+```powershell
+lathe doctor
+```
+*Expected output:* Diagnostic checks report `[Pass]`.
+
+#### 2.9 Configure Optional Speed Settings
+Configure environment variables to optimize Ollama throughput and memory retention on Windows.
+```powershell
+setx OLLAMA_KEEP_ALIVE 30m
+setx OLLAMA_FLASH_ATTENTION 1
+setx OLLAMA_KV_CACHE_TYPE q8_0
+```
+Right-click the llama icon in the Windows system tray, select **Quit Ollama**, and relaunch Ollama from the Start Menu.
+
+**✓ Check:**
+```powershell
+lathe doctor
+```
+*Expected output:* Ollama Service displays `[Pass] Online at http://localhost:11434`.
+
+#### 2.10 Create a Test Project and Run Lathe
+Initialize a clean project workspace and start an interactive session.
+```powershell
+New-Item -ItemType Directory -Force -Path "$HOME\lathe-playground"
+Set-Location "$HOME\lathe-playground"
+git init -b main
+Set-Content -Path calc.py -Value @"
+def add(a, b):
+    return a + b
+"@
+git add calc.py
+git -c user.name="Tester" -c user.email="test@lathe.ai" commit -m "initial commit"
+lathe
+```
+When the `lathe>` prompt appears, ask a test question:
+```text
+lathe> what does calc.py do?
+```
+Type `/exit` or press `Ctrl + D` to exit.
+
+#### 2.11 Optional: Configure Hugging Face Token (Remote Planner)
+If using cloud reasoning models for planning, set your Hugging Face API key in your user environment:
+```powershell
+setx HF_TOKEN "hf_your_token_here"
+```
+Close and reopen your PowerShell window so the new environment variable is loaded.
+
+<div style="page-break-before: always;"></div>
+
+### Linux Installation
+
+Follow these steps on Ubuntu, Debian, Fedora, Arch Linux, or any modern Linux distribution.
+
+> [!NOTE]
+> **Package Manager Notice:**
+> The commands below use `apt` (Ubuntu/Debian). On **Fedora/RHEL**, substitute `sudo dnf install -y git curl`. On **Arch Linux**, substitute `sudo pacman -S --noconfirm git curl`.
+
+#### 3.1 Install System Prerequisites
+Install Git and Curl from your system's package repository.
+```bash
+sudo apt update && sudo apt install -y git curl
+```
+**✓ Check:**
+```bash
+git --version && curl --version
+```
+*Expected output:* Version lines for both `git` and `curl`.
+
+#### 3.2 Install the `uv` Package Manager
+Install Astral `uv` using the standalone shell script.
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+Close and reopen your terminal (or run `source $HOME/.local/bin/env` if prompted).
+
+**✓ Check:**
+```bash
+uv --version
+```
+*Expected output:* `uv 0.x.x` (or newer).
+
+#### 3.3 Install Lathe
+Install the Lathe agent into an isolated global tool environment and update your shell path.
+```bash
+uv tool install git+https://github.com/AdityaSurse/lathe
+uv tool update-shell
+```
+*(To install the stable PyPI release instead, run `uv tool install lathe-agent`.)*
+
+Close and reopen your terminal.
+
+**✓ Check:**
+```bash
+lathe --version
+```
+*Expected output:* `lathe version 1.0.0` (or current version).
+
+#### 3.4 Install and Enable Ollama
+Install Ollama as a system service using the official Linux installation script.
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+```
+**✓ Check:**
+```bash
+ollama --version
+systemctl status ollama --no-pager
+```
+*Expected output:* Ollama version and service status showing `active (running)`.
+
+#### 3.5 Check Available RAM
+Inspect your system memory to select the right model tier.
+```bash
+free -h
+```
+**✓ Check:**
+Check the `Mem: total` line (e.g. `7.8Gi` or `15.5Gi` or `31.2Gi`).
+
+#### 3.6 Download Models for Your RAM Tier
+Download model weights matching your system capacity.
+
+**For 8 GB RAM Systems:**
+```bash
+ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
+ollama pull gemma4:e2b
+ollama pull nomic-embed-text
+```
+
+**For 16 GB or Higher RAM Systems:**
+```bash
+ollama pull hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M
+ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
+ollama pull nomic-embed-text
+```
+
+**✓ Check:**
+```bash
+ollama list
+```
+*Expected output:* List of downloaded model tags and file sizes.
+
+#### 3.7 Configure Lathe Globally
+Apply your chosen model preset to your global configuration file (`~/.config/lathe/lathe.toml`).
+
+**For 8 GB RAM (Fast Preset):**
+```bash
+lathe models preset fast --global
+```
+
+**For 16 GB+ RAM (Qwen Team Preset):**
+```bash
+lathe models preset qwen --global
+```
+
+> [!TIP]
+> **Manual Configuration Fallback:**
+> You can also create and edit the global configuration file directly:
+> ```bash
+> mkdir -p ~/.config/lathe
+> lathe config init --path ~/.config/lathe/lathe.toml
+> nano ~/.config/lathe/lathe.toml
+> ```
+> Verify that `[roles.coder]` and `[roles.router]` specify your local Ollama models:
+> ```toml
+> [roles.coder]
+> backend = "ollama"
+> model = "hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M"
+> 
+> [roles.router]
+> backend = "ollama"
+> model = "hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M"
+> ```
+
+**✓ Check:**
+```bash
+lathe doctor
+```
+*Expected output:* All diagnostic checks show `[Pass]`.
+
+#### 3.8 Configure Optional Speed Settings
+Configure Ollama service environment variables for 30-minute model persistence and flash attention.
+Run `sudo systemctl edit ollama` and add the following lines:
+```ini
+[Service]
+Environment="OLLAMA_KEEP_ALIVE=30m"
+Environment="OLLAMA_FLASH_ATTENTION=1"
+Environment="OLLAMA_KV_CACHE_TYPE=q8_0"
+```
+Save the file and restart the Ollama daemon:
+```bash
+sudo systemctl restart ollama
+```
+**✓ Check:**
+```bash
+systemctl status ollama --no-pager
+```
+*Expected output:* `Active: active (running)`.
+
+#### 3.9 Create a Test Project and Run Lathe
+Set up a clean test directory and launch your first session.
+```bash
+mkdir -p ~/lathe-playground && cd ~/lathe-playground
+git init -b main
+cat << 'EOF' > calc.py
+def add(a, b):
+    return a + b
+EOF
+git add calc.py
+git -c user.name="Tester" -c user.email="test@lathe.ai" commit -m "initial commit"
+lathe
+```
+At the `lathe>` prompt, ask:
+```text
+lathe> what does calc.py do?
+```
+Type `/exit` or press `Ctrl + D` to exit.
+
+#### 3.10 Optional: Configure Hugging Face Token (Remote Planner)
+If you wish to use remote planning models, add your Hugging Face API key to `~/.bashrc`:
+```bash
+echo 'export HF_TOKEN="hf_your_token_here"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+---
+
+### Updating Lathe
+
+To update Lathe to the latest version across any operating system, use `uv tool`:
+
+**Updating from GitHub (Latest Development Version):**
+```bash
+uv tool install --force git+https://github.com/AdityaSurse/lathe
+```
+*(On Windows PowerShell, run the exact same command).*
+
+**Updating from PyPI (Stable Version):**
+```bash
+uv tool upgrade lathe-agent
+```
+
+**✓ Check:**
+```bash
+lathe --version
+```
+*Expected output:* Displays the newly updated version string.
+
+---
+
+### Uninstalling Lathe
+
+To cleanly remove Lathe, its configuration files, and downloaded model weights from your system:
+
+#### 1. Uninstall the Lathe CLI Executable
+```bash
+uv tool uninstall lathe-agent
+```
+
+#### 2. Remove Configuration and Cache Directories
+- **macOS / Linux:**
+  ```bash
+  rm -rf ~/.config/lathe ~/.lathe
+  ```
+- **Windows (PowerShell):**
+  ```powershell
+  Remove-Item -Recurse -Force "$HOME\.config\lathe", "$HOME\.lathe"
+  ```
+
+#### 3. (Optional) Remove Ollama Models to Free Disk Space
+If you wish to delete downloaded model weights:
+```bash
+ollama rm hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M
+ollama rm hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
+ollama rm nomic-embed-text
+```
+
+---
+
+### Installation Troubleshooting
+
+If you encounter an issue during installation, look up the symptom in the table below:
+
+| Symptom / Error | Root Cause | Solution |
+| :--- | :--- | :--- |
+| **`lathe: command not found`** or **`'lathe' is not recognized`** | The `~/.local/bin` directory (or Windows tool directory) is not in your shell's `PATH`. | Run `uv tool update-shell`, then close and reopen your terminal or PowerShell window. |
+| **`running scripts is disabled on this system`** (Windows) | Windows PowerShell restricts execution of remote scripts by default. | Run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` in PowerShell, confirm with `Y`, and retry. |
+| **`Ollama Service: Fail`** or **`Connection refused`** | The Ollama background daemon is not running. | **macOS**: Open Ollama from Applications.<br>**Windows**: Open Ollama from Start Menu.<br>**Linux**: Run `sudo systemctl start ollama`. |
+| **`sharded GGUF`** or **`model not found`** error during pull | Upstream `hf.co/Qwen/` repository distributes sharded weights that Ollama cannot assemble. | Always pull the single-file GGUF quant from bartowski: `ollama pull hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M`. |
+| **`ModuleNotFoundError`** after upgrading Python or Lathe | Broken virtual environment or missing dependency in tool cache. | Run `uv tool install --force git+https://github.com/AdityaSurse/lathe` to recreate the isolated environment. |
+| **Lathe freezes or prints `Not in a project folder` on startup** | You launched Lathe from your home directory (`~`) or root (`/`). | Lathe protects your home folder from accidental file edits. Create or `cd` into a project folder (e.g. `cd ~/lathe-playground`). |
+| **Token generation is very slow (< 5 tokens/sec)** | Model is too large for your RAM, or Ollama is swapping weights to disk. | Switch to the fast preset (`lathe models preset fast --global`), use the 1.5B/2B models, and configure speed settings (`OLLAMA_KEEP_ALIVE=30m`, `OLLAMA_FLASH_ATTENTION=1`). |
 
 ---
 

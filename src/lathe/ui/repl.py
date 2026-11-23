@@ -177,6 +177,16 @@ def run_repl(
     # Print startup banner
     print_startup_banner(active_config, console=console)
 
+    # Project folder guard: check if running in home dir, root, or non-project
+    from lathe.safety.guard import check_is_project_folder
+
+    is_proj, guard_msg = check_is_project_folder(Path.cwd())
+    if not is_proj:
+        console.print(
+            f"[yellow]{guard_msg or 'Not in a project folder — cd into a project for full features.'}[/yellow]\n"
+        )
+        active_config.settings.mode = "single"
+
     # Determine permission engine mode
     mode = PermissionMode.DEFAULT
     if yolo:

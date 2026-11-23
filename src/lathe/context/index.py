@@ -10,11 +10,13 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import httpx
-import numpy as np
-import tree_sitter_language_pack as tslp
+
+if TYPE_CHECKING:
+    import numpy as np
+    import tree_sitter_language_pack as tslp
 
 from lathe.config import EmbeddingsConfig, get_hf_token, load_config
 from lathe.context.repomap import (
@@ -24,7 +26,7 @@ from lathe.context.repomap import (
 )
 from lathe.safety.workspace import Workspace
 
-DEFAULT_INDEX_DIR = ".lathe/index"
+DEFAULT_INDEX_DIR = ".lathe/cache"
 DEFAULT_DB_FILENAME = "code_index.db"
 
 
@@ -59,10 +61,12 @@ class SearchResult:
 
 def normalize_vector(vec: np.ndarray) -> np.ndarray:
     """Normalize a vector to unit L2 length so dot product equals cosine similarity."""
+    import numpy as np
+
     norm = float(np.linalg.norm(vec))
     if norm == 0 or np.isnan(norm):
         return vec
-    return cast(np.ndarray, vec / norm)
+    return cast(Any, vec / norm)
 
 
 # ---------------------------------------------------------------------------
@@ -82,6 +86,8 @@ class BaseEmbedder(ABC):
         """Generate a normalized embedding for a search query string."""
         results = self.embed_batch([text])
         if not results:
+            import numpy as np
+
             return np.zeros(128, dtype=np.float32)
         return results[0]
 
@@ -101,6 +107,7 @@ class OllamaEmbedder(BaseEmbedder):
         """Embed a list of texts via Ollama REST API with legacy fallback."""
         if not texts:
             return []
+        import numpy as np
 
         # 1. Try modern /api/embed endpoint (supports batching)
         try:
@@ -162,6 +169,8 @@ class SentenceTransformersEmbedder(BaseEmbedder):
     def embed_batch(self, texts: list[str]) -> list[np.ndarray]:
         if not texts:
             return []
+        import numpy as np
+
         model = self._get_model()
         vectors = model.encode(texts, normalize_embeddings=True, convert_to_numpy=True)
         return [np.array(v, dtype=np.float32) for v in vectors]
@@ -181,6 +190,8 @@ class HFEmbedder(BaseEmbedder):
     def embed_batch(self, texts: list[str]) -> list[np.ndarray]:
         if not texts:
             return []
+        import numpy as np
+
         try:
             from huggingface_hub import InferenceClient
 
@@ -205,6 +216,8 @@ class DeterministicEmbedder(BaseEmbedder):
         self.dim = dim
 
     def embed_batch(self, texts: list[str]) -> list[np.ndarray]:
+        import numpy as np
+
         results: list[np.ndarray] = []
         for text in texts:
             vec = np.zeros(self.dim, dtype=np.float32)
@@ -284,6 +297,8 @@ def chunk_file(file_path: Path, relative_path: str) -> list[CodeChunk]:
     # 1. Attempt tree-sitter AST chunking if language grammar is supported
     if lang:
         try:
+            import tree_sitter_language_pack as tslp
+
             parser = tslp.get_parser(lang)
             tree = parser.parse(code_bytes)
 
@@ -394,7 +409,12 @@ class CodeIndex:
         db_path: Path | None = None,
     ) -> None:
         self.workspace_root = Path(workspace_root).resolve() if workspace_root else Path.cwd()
-        self.index_dir = self.workspace_root / DEFAULT_INDEX_DIR
+        cache_candidate = self.workspace_root / ".lathe" / "cache"
+        legacy_candidate = self.workspace_root / ".lathe" / "index"
+        if (legacy_candidate / DEFAULT_DB_FILENAME).exists() and not (cache_candidate / DEFAULT_DB_FILENAME).exists():
+            self.index_dir = legacy_candidate
+        else:
+            self.index_dir = cache_candidate
         self.index_dir.mkdir(parents=True, exist_ok=True)
         self.db_path = db_path or (self.index_dir / DEFAULT_DB_FILENAME)
 
@@ -576,6 +596,8 @@ class CodeIndex:
                     )
                     cached_row = cursor.fetchone()
                     if cached_row and cached_row[0]:
+                        import numpy as np
+
                         chunk.embedding = np.frombuffer(cached_row[0], dtype=np.float32)
                         stats["chunks_reused"] += 1
                     else:
@@ -593,6 +615,8 @@ class CodeIndex:
                         stats["chunks_indexed"] += 1
 
                 # Insert all chunks into database
+                import numpy as np
+
                 for chunk in new_chunks:
                     blob = (
                         chunk.embedding.astype(np.float32).tobytes()
@@ -663,6 +687,8 @@ class CodeIndex:
 
         if not rows:
             return []
+
+        import numpy as np
 
         embeddings_list: list[np.ndarray] = []
         metadata_list: list[tuple[str, str, str, str, int, int, str]] = []

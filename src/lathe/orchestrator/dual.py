@@ -261,6 +261,11 @@ class DualAgent:
     def _get_repo_map(self, task: str) -> str:
         """Extract repository map signatures for the planner prompt."""
         try:
+            from lathe.safety.guard import check_is_project_folder
+
+            if not check_is_project_folder(self.workspace_root)[0]:
+                return "(Not in a project folder — repo map skipped)"
+
             from lathe.context.repomap import RepoMap
 
             budget = getattr(self.config.settings, "repomap_token_budget", 2048)

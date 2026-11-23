@@ -12,7 +12,6 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from lathe.context.index import CodeIndex
 from lathe.safety.workspace import Workspace
 from lathe.tools.base import RiskLevel, Tool, ToolContext, ToolResult
 from lathe.tools.files import is_binary_file
@@ -232,6 +231,8 @@ def semantic_search_sync(
     workspace_root: Path | None = None,
 ) -> str:
     """Execute semantic code search across workspace vector index."""
+    from lathe.context.index import CodeIndex
+
     root = workspace_root or Path.cwd()
     index = CodeIndex(workspace_root=root)
 
