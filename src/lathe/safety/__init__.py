@@ -2,6 +2,8 @@
 
 from enum import Enum
 
+from lathe.safety.guard import check_is_project_folder
+
 from lathe.safety.checkpoints import (
     CHECKPOINT_REF_PREFIX,
     Checkpoint,
@@ -41,12 +43,14 @@ class ActionPermission(Enum):
 
 
 __all__ = [
+    "ActionPermission",
     "CHECKPOINT_REF_PREFIX",
     "Checkpoint",
     "CheckpointManager",
     "DEFAULT_BLOCKLIST_PATTERNS",
     "DEFAULT_IGNORED_DIRS",
     "FORBIDDEN_ENV_NAMES",
+    "check_is_project_folder",
     "ActionPermission",
     "FileAccessError",
     "IgnoreRule",

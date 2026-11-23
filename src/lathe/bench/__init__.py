@@ -22,6 +22,7 @@ from lathe.bench.runner import (
     run_model_benchmark,
     run_task_evaluation,
 )
+from lathe.bench.speed import SpeedBenchmarkResult, run_speed_benchmark
 from lathe.bench.tasks import ALL_BENCH_TASKS
 
 __all__ = [
@@ -29,6 +30,7 @@ __all__ = [
     "BenchmarkSuiteResult",
     "BenchTask",
     "ModelBenchSummary",
+    "SpeedBenchmarkResult",
     "TaskResult",
     "evaluate_c_task",
     "evaluate_python_task",
@@ -38,6 +40,7 @@ __all__ = [
     "render_benchmark_table",
     "run_benchmark_suite",
     "run_model_benchmark",
+    "run_speed_benchmark",
     "run_task_evaluation",
     "save_benchmark_json",
 ]

@@ -18,6 +18,7 @@ class SessionStats:
     completion_tokens: int = 0
     total_tokens: int = 0
     request_count: int = 0
+    status_message: str | None = None
 
     def add_usage(self, usage: Usage | None) -> None:
         """Accumulate token counts from a completion or stream terminal chunk."""
@@ -72,6 +73,11 @@ def render_status_toolbar(config: LatheConfig, stats: SessionStats) -> HTML:
         models_str = f"coder: {coder_name}"
 
     tokens_str = f"{stats.total_tokens:,}"
+    status_extra = (
+        f" | <b>status:</b> <ansiyellow>{stats.status_message}</ansiyellow>"
+        if stats.status_message
+        else ""
+    )
 
     return HTML(
         f"<style bg='#1e293b' fg='#f8fafc'> "
@@ -79,6 +85,7 @@ def render_status_toolbar(config: LatheConfig, stats: SessionStats) -> HTML:
         f"| <b>git:</b> <ansigreen>{branch}</ansigreen> "
         f"| <b>mode:</b> <ansiyellow>{mode}</ansiyellow> "
         f"| <b>models:</b> {models_str} "
-        f"| <b>tokens:</b> <ansimagenta>{tokens_str}</ansimagenta> "
+        f"| <b>tokens:</b> <ansimagenta>{tokens_str}</ansimagenta>"
+        f"{status_extra} "
         f"</style>"
     )

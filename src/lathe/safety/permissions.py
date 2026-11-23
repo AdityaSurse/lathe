@@ -314,10 +314,9 @@ class PermissionEngine:
         if self.input_handler is not None:
             user_choice = self.input_handler(prompt_str).strip().lower()
         elif not sys.stdin.isatty():
-            # Non-interactive automated environments reject mutating operations by default
-            return PermissionResult(
-                decision=PermissionDecision.DENY,
-                reason="Non-interactive session: user confirmation required.",
+            raise RuntimeError(
+                "Cannot prompt for permission in non-interactive environment (stdin is not a TTY). "
+                "Run with --auto or --yolo to bypass interactive permission prompts."
             )
         else:
             try:
@@ -380,6 +379,10 @@ class PermissionEngine:
         """Prompt for secondary input string with handler support."""
         if self.input_handler is not None:
             return self.input_handler(prompt)
+        if not sys.stdin.isatty():
+            raise RuntimeError(
+                f"Cannot prompt for input in non-interactive environment (stdin is not a TTY): '{prompt}'"
+            )
         try:
             val = input(prompt).strip()
             return val if val else default

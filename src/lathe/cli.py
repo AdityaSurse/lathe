@@ -6,7 +6,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import httpx
 import typer
 from dotenv import load_dotenv
 from rich.console import Console
@@ -25,8 +24,7 @@ from lathe.config import (
     load_config,
     set_config_value,
 )
-from lathe.models import models_app
-from lathe.session import Session, SessionConfig  # noqa: F401
+from lathe.models.cli import models_app
 
 # Load local environment variables (.env) if present
 load_dotenv()
@@ -157,6 +155,13 @@ def map_cmd(
     ),
 ) -> None:
     """Print the repository symbol map and definition hierarchy."""
+    from lathe.safety.guard import check_is_project_folder
+
+    is_proj, msg = check_is_project_folder(Path.cwd())
+    if not is_proj:
+        console.print(msg or "Not in a project folder — cd into a project for full features.")
+        return
+
     from lathe.context.repomap import RepoMap
 
     rm = RepoMap(workspace_root=Path.cwd(), token_budget=budget)
@@ -183,6 +188,12 @@ def index_cmd(
     ),
 ) -> None:
     """Build or incrementally refresh the semantic code vector index."""
+    from lathe.safety.guard import check_is_project_folder
+
+    is_proj, msg = check_is_project_folder(Path.cwd())
+    if not is_proj:
+        console.print(msg or "Not in a project folder — cd into a project for full features.")
+        return
     from rich.progress import (
         BarColumn,
         Progress,
@@ -371,6 +382,8 @@ def doctor() -> None:
     installed_models: list[str] = []
 
     try:
+        import httpx
+
         response = httpx.get(f"{ollama_url.rstrip('/')}/api/tags", timeout=2.0)
         if response.status_code == 200:
             ollama_running = True
@@ -861,6 +874,12 @@ def bench_cmd(
         None,
         help="Optional model names or identifiers to benchmark (default: candidate models).",
     ),
+    speed: bool = typer.Option(
+        False,
+        "--speed",
+        "-s",
+        help="Run startup and generation latency benchmark measuring version, doctor, TTFT, and tok/s.",
+    ),
     preset: list[str] | None = typer.Option(
         None,
         "--preset",
@@ -884,6 +903,12 @@ def bench_cmd(
     ),
 ) -> None:
     """Run the Lathe mini-bench evaluation suite across models."""
+    if speed:
+        from lathe.bench.speed import run_speed_benchmark
+
+        run_speed_benchmark(out_console=console)
+        raise typer.Exit(0)
+
     from lathe.bench.report import (
         generate_benchmark_chart,
         render_benchmark_table,

@@ -5,8 +5,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from huggingface_hub import HfApi
-
 TARGET_QUANTS = ["Q4_K_M", "Q5_K_M", "Q8_0"]
 
 
@@ -39,6 +37,8 @@ def search_gguf_repos(
     api: Any | None = None,
 ) -> list[GGUFRepoResult]:
     """Search Hugging Face Hub for GGUF models, sorting by downloads."""
+    from huggingface_hub import HfApi
+
     client = api or HfApi(token=token)
     results: list[GGUFRepoResult] = []
 

@@ -533,35 +533,105 @@ Codebase hierarchy separating multi-model intelligence, provider drivers, and sa
 
 ## Installation & Quickstart
 
-### 1. Install Lathe
+Install Lathe in under 2 minutes. For the complete step-by-step beginner walkthrough including RAM checks, hardware recommendations, speed optimizations, and troubleshooting:
+
+📖 **Full step-by-step guide** → [assets/manual/Lathe-User-Manual.pdf](assets/manual/Lathe-User-Manual.pdf)
+
+<details>
+<summary><b>macOS</b></summary>
 
 ```bash
-# Recommended: Isolated tool install with Astral uv
-uv tool install lathe-agent
+# 1. Install uv & Git developer tools
+curl -LsSf https://astral.sh/uv/install.sh | sh
+xcode-select --install
 
-# With model merging support:
-uv tool install "lathe-agent[merge]"
+# 2. Install Lathe (latest development build)
+uv tool install git+https://github.com/AdityaSurse/lathe
+uv tool update-shell
 
-# Or via pipx:
-pipx install lathe-agent
-```
+# (Or install the stable PyPI release: uv tool install lathe-agent)
 
-**One-Liner Installers:**
-```bash
-# Linux / macOS
-curl -fsSL https://raw.githubusercontent.com/adityasurse/lathe/main/install.sh | bash
+# 3. Install Ollama and pull local models
+# Download Ollama from https://ollama.com/download or via Homebrew: brew install --cask ollama
+ollama pull hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M
+ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
+ollama pull nomic-embed-text
 
-# Windows PowerShell
-irm https://raw.githubusercontent.com/adityasurse/lathe/main/install.ps1 | iex
-```
-
-### 2. Verify Runtime with `lathe doctor`
-
-```bash
+# 4. Configure global preset and verify
+lathe models preset qwen --global
 lathe doctor
+
+# 5. Launch in any git repository
+cd my-project
+lathe
 ```
 
-### 3. Launch an Autonomous Coding Session
+</details>
+
+<details>
+<summary><b>Windows (PowerShell)</b></summary>
+
+```powershell
+# 1. Enable scripts & install uv and Git
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+winget install --id Git.Git -e
+
+# 2. Install Lathe (latest development build)
+uv tool install git+https://github.com/AdityaSurse/lathe
+uv tool update-shell
+
+# (Or install the stable PyPI release: uv tool install lathe-agent)
+
+# 3. Install Ollama and pull local models
+# Download Ollama from https://ollama.com/download/windows or via winget: winget install --id Ollama.Ollama -e
+ollama pull hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M
+ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
+ollama pull nomic-embed-text
+
+# 4. Configure global preset and verify
+lathe models preset qwen --global
+lathe doctor
+
+# 5. Launch in any git repository
+cd my-project
+lathe
+```
+
+</details>
+
+<details>
+<summary><b>Linux</b></summary>
+
+```bash
+# 1. Install prerequisites & uv
+sudo apt update && sudo apt install -y git curl
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 2. Install Lathe (latest development build)
+uv tool install git+https://github.com/AdityaSurse/lathe
+uv tool update-shell
+
+# (Or install the stable PyPI release: uv tool install lathe-agent)
+
+# 3. Install Ollama and pull local models
+curl -fsSL https://ollama.com/install.sh | sh
+ollama pull hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M
+ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
+ollama pull nomic-embed-text
+
+# 4. Configure global preset and verify
+lathe models preset qwen --global
+lathe doctor
+
+# 5. Launch in any git repository
+cd my-project
+lathe
+```
+
+</details>
+
+### Quick Command Reference
 
 ```bash
 # Interactive REPL session

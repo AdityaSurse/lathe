@@ -264,3 +264,11 @@ def test_permission_engine_yolo_warning_and_approval(tmp_path: Path) -> None:
     res = engine.check_permission(run_shell, {"command": "echo safe"})
     assert res.is_allowed is True
     assert engine.warned_yolo is True
+
+
+def test_permission_engine_non_interactive_raises(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """When stdin is not a TTY and no input_handler is provided, raise RuntimeError."""
+    monkeypatch.setattr("sys.stdin.isatty", lambda: False)
+    engine = PermissionEngine(tmp_path)
+    with pytest.raises(RuntimeError, match="Cannot prompt for permission in non-interactive environment"):
+        engine.check_permission(run_shell, {"command": "git status"})

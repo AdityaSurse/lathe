@@ -10,8 +10,6 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-import tree_sitter_language_pack as tslp
-
 from lathe.safety.workspace import Workspace
 
 SUPPORTED_EXTENSIONS: dict[str, str] = {
@@ -259,6 +257,8 @@ def parse_file_symbols(file_path: Path, relative_path: str) -> FileSymbols:
         )
 
     try:
+        import tree_sitter_language_pack as tslp
+
         parser = tslp.get_parser(lang)
         tree = parser.parse(code_bytes)
     except Exception:

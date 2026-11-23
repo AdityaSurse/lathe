@@ -6,8 +6,6 @@ import re
 from collections.abc import AsyncIterator
 from typing import Any
 
-from huggingface_hub import AsyncInferenceClient
-
 from lathe.config import RoleConfig
 from lathe.llm.base import LLMClient, LLMError, ModelNotFoundError
 from lathe.llm.types import Message, StreamChunk, ToolCall, ToolSpec, Usage
@@ -44,10 +42,12 @@ class HFClient(LLMClient):
         self.max_retries = max_retries
         self._custom_client = client
 
-    def _get_client(self) -> AsyncInferenceClient:
+    def _get_client(self) -> Any:
         """Return the injected test client or instantiate a fresh AsyncInferenceClient."""
         if self._custom_client is not None:
-            return self._custom_client  # type: ignore[no-any-return]
+            return self._custom_client
+        from huggingface_hub import AsyncInferenceClient
+
         return AsyncInferenceClient(
             model=self.role_config.model,
             provider=self.provider,  # type: ignore[arg-type]
