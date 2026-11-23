@@ -221,3 +221,142 @@ def use(
     except Exception as exc:
         console.print(f"[red]Failed to update configuration:[/red] {exc}")
         raise typer.Exit(code=1) from exc
+
+
+@models_app.command(name="presets")
+def list_model_presets() -> None:
+    """Display all available model presets and indicate which models are already pulled."""
+    from lathe.models.local import _models_match
+    from lathe.models.presets import list_presets
+
+    try:
+        local_models = asyncio.run(get_local_ollama_models())
+        local_names = {m.get("name", "") for m in local_models}
+    except Exception:
+        local_names = set()
+
+    table = Table(
+        title="Lathe Model Presets",
+        title_style="bold cyan",
+        border_style="bright_blue",
+        show_header=True,
+        header_style="bold white",
+    )
+    table.add_column("Preset", style="bold green", no_wrap=True)
+    table.add_column("Display Name & Description")
+    table.add_column("Coder Model")
+    table.add_column("Router Model")
+    table.add_column("Status", no_wrap=True)
+
+    for p in list_presets():
+        unique_models = p.get_unique_models()
+        pulled_count = sum(
+            1 for m in unique_models if any(_models_match(m, ln) for ln in local_names)
+        )
+        total_count = len(unique_models)
+
+        if pulled_count == total_count:
+            status_badge = f"[bold green]Ready[/bold green] ({pulled_count}/{total_count})"
+        elif pulled_count > 0:
+            status_badge = f"[yellow]Partial[/yellow] ({pulled_count}/{total_count})"
+        else:
+            status_badge = f"[dim]Not Pulled[/dim] (0/{total_count})"
+
+        desc = f"[bold]{p.display_name}[/bold]\n[dim]{p.description}[/dim]"
+        table.add_row(
+            p.name,
+            desc,
+            p.coder.model,
+            p.router.model,
+            status_badge,
+        )
+
+    console.print(table)
+    console.print(
+        "\n[dim]To pull and configure a preset, run:[/dim] "
+        "[bold cyan]lathe models preset <name>[/bold cyan]\n"
+    )
+
+
+@models_app.command(name="preset")
+def apply_model_preset(
+    name: str = typer.Argument(
+        ...,
+        help="Preset name ('qwen', 'gemma', or 'mixed').",
+    ),
+    global_config: bool = typer.Option(
+        False,
+        "--global",
+        "-g",
+        help="Write to global configuration (~/.config/lathe/lathe.toml).",
+    ),
+    project_config: bool = typer.Option(
+        False,
+        "--project",
+        "-p",
+        help="Write to project configuration (./lathe.toml).",
+    ),
+) -> None:
+    """Pull missing models for a preset, probe capabilities, and configure lathe.toml."""
+    from lathe.config import get_global_config_path, get_project_config_path
+    from lathe.models.local import _models_match
+    from lathe.models.presets import apply_preset_to_toml_file, get_preset
+
+    try:
+        preset = get_preset(name)
+    except ValueError as exc:
+        console.print(f"[red]Error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print(f"\n[bold cyan]Configuring Preset:[/bold cyan] {preset.display_name}")
+    console.print(f"[dim]{preset.description}[/dim]\n")
+
+    # Check which models are already pulled
+    try:
+        local_models = asyncio.run(get_local_ollama_models())
+        local_names = {m.get("name", "") for m in local_models}
+    except Exception:
+        local_names = set()
+
+    for m in preset.get_unique_models():
+        is_pulled = any(_models_match(m, ln) for ln in local_names)
+        if is_pulled:
+            console.print(f"  [green]✓[/green] [bold]{m}[/bold] is already pulled.")
+        else:
+            console.print(f"  [yellow]↓ Pulling missing model:[/yellow] [bold]{m}[/bold]")
+            try:
+                asyncio.run(pull_model_with_progress(model=m, console=console))
+            except Exception as exc:
+                console.print(f"[red]Failed to pull {m}:[/red] {exc}")
+                raise typer.Exit(code=1) from exc
+
+        # Probe model capabilities
+        console.print(f"  [cyan]🔍 Probing tool-calling capabilities for:[/cyan] {m}")
+        try:
+            proto = asyncio.run(probe_model(model=m, console=console))
+            console.print(f"  [green]✓[/green] Tool protocol: [bold cyan]{proto}[/bold cyan]")
+        except Exception as exc:
+            console.print(
+                f"  [dim]Notice: Probe could not complete ({exc}); fallback will be used.[/dim]"
+            )
+
+    # Determine target file
+    if global_config:
+        target_path = get_global_config_path()
+    elif project_config:
+        target_path = get_project_config_path()
+    else:
+        choice = typer.prompt(
+            "Write to [p]roject (./lathe.toml) or [g]lobal (~/.config/lathe/lathe.toml)?",
+            default="project",
+        )
+        if choice.strip().lower().startswith("g"):
+            target_path = get_global_config_path()
+        else:
+            target_path = get_project_config_path()
+
+    apply_preset_to_toml_file(preset, target_path)
+    console.print(
+        f"\n[bold green]✓ Successfully configured '{preset.name}' preset "
+        f"in {target_path}![/bold green]\n"
+    )

@@ -159,7 +159,9 @@ Respond ONLY with a valid JSON object matching this schema:
 
 def extract_json_block(text: str) -> str:
     """Extract JSON content from markdown code fences or raw string."""
-    text_clean = text.strip()
+    from lathe.models.presets import strip_thinking_blocks
+
+    text_clean = strip_thinking_blocks(text.strip())
     fence_match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", text_clean)
     if fence_match:
         return fence_match.group(1).strip()

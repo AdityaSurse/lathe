@@ -1,7 +1,7 @@
 # Lathe User Manual
 **Autonomous Terminal AI Coding Agent Powered by Dual Open-Source Models & Automated Merging**
 
-Version 0.1.0 · November 2026
+Version 1.0.0 · November 2026
 
 ![Lathe Logo](../../assets/logo.png)
 
@@ -45,11 +45,18 @@ Version 0.1.0 · November 2026
 8. [Complete Slash Command Reference](#8-complete-slash-command-reference)
 9. [Configuration Reference (lathe.toml)](#9-configuration-reference-lathetoml)
 10. [Choosing & Sizing Models](#10-choosing--sizing-models)
-11. [Safety, Threat Model & Blocked Commands](#11-safety-threat-model--blocked-commands)
-12. [Troubleshooting & Error Recovery](#12-troubleshooting--error-recovery)
-13. [Frequently Asked Questions (FAQ)](#13-frequently-asked-questions-faq)
-14. [Keyboard Shortcuts](#14-keyboard-shortcuts)
-15. [Glossary of Terms](#15-glossary-of-terms)
+11. [Using Google Gemma](#11-using-google-gemma)
+   - [Why Gemma?](#why-gemma)
+   - [Model Sizes & Memory Footprint](#model-sizes--memory-footprint)
+   - [Hardware Sizing Guidance](#hardware-sizing-guidance)
+   - [Preset Comparison: Qwen vs Gemma vs Mixed](#preset-comparison-qwen-vs-gemma-vs-mixed)
+   - [Switching Presets in Lathe](#switching-presets-in-lathe)
+   - [Gemma Architecture & Compatibility Features](#gemma-architecture--compatibility-features)
+12. [Safety, Threat Model & Blocked Commands](#12-safety-threat-model--blocked-commands)
+13. [Troubleshooting & Error Recovery](#13-troubleshooting--error-recovery)
+14. [Frequently Asked Questions (FAQ)](#14-frequently-asked-questions-faq)
+15. [Keyboard Shortcuts](#15-keyboard-shortcuts)
+16. [Glossary of Terms](#16-glossary-of-terms)
 
 ---
 
@@ -703,9 +710,10 @@ lathe tool edit_file
 ```
 
 #### `lathe bench [MODELS...]`
-Run the Lathe mini-bench evaluation suite across models.
+Run the Lathe mini-bench evaluation suite across models or presets.
 ```bash
 lathe bench
+lathe bench --preset gemma --preset qwen
 lathe bench qwen2.5-coder:7b lathe-merged
 lathe bench --limit 10 --output-dir ./bench/results
 ```
@@ -713,6 +721,8 @@ lathe bench --limit 10 --output-dir ./bench/results
 #### `lathe config`
 Inspect and manage configuration files.
 ```bash
+lathe config init            # Initialize lathe.toml (default qwen preset)
+lathe config init --preset gemma  # Initialize with Google Gemma preset
 lathe config path            # Print paths of global and project lathe.toml
 lathe config show            # Display active merged TOML configuration
 lathe config get <KEY>       # Read value (e.g. lathe config get settings.mode)
@@ -720,8 +730,10 @@ lathe config set <KEY> <VAL> # Write value (e.g. lathe config set settings.mode 
 ```
 
 #### `lathe models`
-Inspect and configure local and remote models.
+Inspect and configure local, remote, and preset models.
 ```bash
+lathe models presets         # List available presets (qwen, gemma, mixed) with pull status
+lathe models preset <NAME>   # Pull models for preset and apply to lathe.toml (e.g. lathe models preset gemma)
 lathe models search <QUERY>  # Search GGUF repositories on Hugging Face Hub
 lathe models pull <REPO_ID>  # Download and register model in Ollama
 lathe models list            # Show local Ollama models with RAM estimates
@@ -733,8 +745,9 @@ lathe models use <MODEL>     # Set model as active coder in lathe.toml
 Interactive model merging wizard powered by mergekit.
 ```bash
 lathe merge                  # Interactive merge wizard
+lathe merge qwen-1.5b        # Run start-small preset (Qwen 1.5B Coder + Instruct)
 lathe merge <NAME>           # Name merge output directory
-lathe merge --preset         # Use start-small preset (Qwen 1.5B Coder + Instruct)
+lathe merge --preset         # Use start-small preset
 lathe merge --colab          # Generate Google Colab notebook (.ipynb)
 lathe merge push <NAME>      # Upload merges/<NAME> to Hugging Face Hub
 lathe merge gguf <NAME>      # Convert to GGUF, quantize, and import into Ollama
@@ -873,6 +886,35 @@ test_command = "pytest tests/ -v"
 enabled = false
 ```
 
+#### Google Gemma Preset `lathe.toml`
+When switched to the Gemma preset (`lathe models preset gemma` or `lathe config init --preset gemma`), the `[roles]` section is automatically configured as follows:
+
+```toml
+[settings]
+mode = "auto"
+
+[roles.planner]
+backend = "ollama"
+model = "gemma4:e4b"
+temperature = 0.6
+max_tokens = 4096
+context_window = 32768
+
+[roles.coder]
+backend = "ollama"
+model = "gemma4:e4b"
+temperature = 0.2
+max_tokens = 4096
+context_window = 32768
+
+[roles.router]
+backend = "ollama"
+model = "gemma4:e2b"
+temperature = 0.0
+max_tokens = 1024
+context_window = 32768
+```
+
 ---
 
 ## 10. Choosing & Sizing Models
@@ -912,7 +954,111 @@ Always select repositories that provide **single-file quantizations** up to 14B 
 
 ---
 
-## 11. Safety, Threat Model & Blocked Commands
+---
+
+## 11. Using Google Gemma
+
+Lathe provides native first-class support for Google Gemma models (`gemma4:e2b`, `gemma4:e4b`) alongside Qwen. With the built-in preset system, switching your entire developer environment between Qwen and Gemma takes a single command.
+
+![Lathe Model Presets](assets/manual/images/models_presets.png)
+
+### Why Gemma?
+- **Open Weights from Google**: State-of-the-art reasoning and code comprehension built on Google DeepMind research.
+- **Permissive Open License**: Open weights allowing commercial and local development without cloud telemetry.
+- **Native Ollama Integration**: Fully supported in Ollama with optimized quantization, native tool calling, and high tokens/sec generation on Apple Silicon and modern x86 GPUs.
+- **Exceptional Efficiency**: Gemma 2B and 4B offer remarkable coding ability at small parameter sizes, running smoothly on laptops with limited unified RAM.
+
+---
+
+### Model Sizes & Memory Footprint
+
+| Gemma Model | Parameter Count | Quantization | RAM / VRAM Usage | Lathe Role Recommendation |
+| :--- | :--- | :--- | :--- | :--- |
+| **`gemma4:e2b`** | 2 Billion | 4-bit (`Q4_K_M`) | **~4.6 GB – 7.5 GB** | **Router & Fast Chat** (instant routing, commit summaries) |
+| **`gemma4:e4b`** | 4 Billion | 4-bit (`Q4_K_M`) | **~6.6 GB – 9.5 GB** | **Coder & Planner** (structured coding, test authoring) |
+| **`gemma4:e9b`** | 9 Billion | 4-bit (`Q4_K_M`) | **~12.5 GB – 16 GB** | **High-Capacity Coder & Planner** (for 32 GB+ workstations) |
+
+---
+
+### Hardware Sizing Guidance
+
+- **8 GB RAM (MacBook Air M1/M2/M3 / Standard Laptops)**:
+  - Run `gemma4:e2b` as the primary coder and router. Gemma 2B fits comfortably in memory while leaving sufficient headroom for the OS and editors.
+- **16 GB RAM (MacBook Pro / Developer Laptops)**:
+  - Run the complete **`gemma` preset**: `gemma4:e4b` as the coder and planner, with `gemma4:e2b` as the high-speed router. Memory stays well under 10 GB, leaving ample room for compilers and browser tabs.
+- **32 GB+ RAM (Mac Studio / Multi-GPU Workstations)**:
+  - Run full-precision or larger Gemma variants (`gemma4:e9b`) or the **`mixed` preset** combining DeepSeek-R1 reasoning with Gemma routing.
+
+---
+
+### Preset Comparison: Qwen vs Gemma vs Mixed
+
+Lathe defines three curated presets in `src/lathe/models/presets.py`:
+
+| Metric / Capability | `qwen` Preset (Default) | `gemma` Preset (Google) | `mixed` Preset (Hybrid) |
+| :--- | :--- | :--- | :--- |
+| **Coder Model** | `Qwen2.5-Coder-7B-Instruct` | `gemma4:e4b` | `Qwen2.5-Coder-7B-Instruct` |
+| **Router Model** | `Qwen2.5-Coder-1.5B-Instruct` | `gemma4:e2b` | `gemma4:e2b` |
+| **Planner Model** | `DeepSeek-R1-Distill-Qwen-7B` | `gemma4:e4b` | `DeepSeek-R1-Distill-Qwen-7B` |
+| **RAM Footprint** | ~6.0 GB | ~6.8 GB | ~6.2 GB |
+| **Generation Speed** | ~42 tokens/sec | ~48 tokens/sec | ~46 tokens/sec |
+| **Coding Strength** | Exceptional syntax & refactoring | Crisp logic & concise functions | Maximum coding precision |
+| **Dual-LLM Fit** | Dedicated reasoning planner | Cohesive single-family planning | Best of both worlds |
+
+---
+
+### Switching Presets in Lathe
+
+Lathe makes switching between model families instantaneous:
+
+#### 1. Inspect Available Presets
+```bash
+lathe models presets
+```
+Displays all configured presets and indicates which weights are already cached in Ollama.
+
+#### 2. Switch to Google Gemma
+```bash
+lathe models preset gemma
+```
+This automatically:
+1. Pulls `gemma4:e4b` and `gemma4:e2b` from Ollama if they are not already installed.
+2. Updates `.lathe/lathe.toml` with the Gemma roles.
+3. Configures temperature (0.2 for coder, 0.6 for planner) and context window (32,768).
+
+You can also initialize a new project with Gemma directly:
+```bash
+lathe config init --preset gemma
+```
+
+#### 3. Switch Back to Qwen
+```bash
+lathe models preset qwen
+```
+
+#### 4. Interactive Gemma Session
+![Gemma Session](assets/manual/images/gemma_session.png)
+
+---
+
+### Gemma Architecture & Compatibility Features
+
+Lathe includes built-in compatibility adaptations specifically tuned for Gemma:
+
+1. **Automatic System-Role Fallback**: Some Gemma prompt templates do not support the `"system"` role natively in Ollama. If an Ollama call rejects the system role, Lathe's `format_messages_with_system_fallback()` automatically prepends the system prompt to the first user message:
+   ```
+   [System Guidelines]
+   <System Prompt>
+
+   [User Request]
+   <User Message>
+   ```
+2. **Thinking / Reasoning Block Stripping**: Gemma variants that output chain-of-thought blocks (`<think>...</think>` or `<thought>...</thought>`) before generating JSON plans are automatically cleaned by Lathe's `strip_thinking_blocks()` filter before Pydantic schema validation.
+3. **Per-Family Context & Temperature**: Gemma models run at temperature `0.2` for the coder role (ensuring deterministic syntax) and `0.6` for the planner role, with a native 32,768 token context window.
+
+---
+
+## 12. Safety, Threat Model & Blocked Commands
 
 ### What Lathe Will NEVER Do
 1. **Never send telemetry**: Lathe transmits zero telemetry, code samples, or analytics to any remote server.
@@ -944,7 +1090,7 @@ Every write operation creates a Git shadow commit before applying changes. If a 
 
 ---
 
-## 12. Troubleshooting & Error Recovery
+## 13. Troubleshooting & Error Recovery
 
 | Issue / Error | Root Cause | Solution |
 | :--- | :--- | :--- |
@@ -956,10 +1102,12 @@ Every write operation creates a Git shadow commit before applying changes. If a 
 | **Sharded GGUF download error** | Model repo split weights into multiple chunk files. | Choose a single-file quant (e.g. `hf.co/bartowski/...:Q4_K_M`). |
 | **Windows execution policy error** | PowerShell prevents script execution. | Run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`. |
 | **Slow tokens/second throughput** | Model too large for GPU VRAM, spilling into CPU swap. | Switch to a smaller quant (`Q4_K_M` instead of `Q8_0`) or a 1.5B/7B model. |
+| **Gemma template rejects `system` role** | Ollama chat template lacks native system role field. | Automatically handled by Lathe: prepends system instructions to first user message. |
+| **Gemma outputs `<think>` reasoning before JSON** | Model emits internal thinking blocks before plan. | Automatically handled by Lathe: stripped before schema validation. |
 
 ---
 
-## 13. Frequently Asked Questions (FAQ)
+## 14. Frequently Asked Questions (FAQ)
 
 ### Q: Does Lathe require an active internet connection?
 **A**: No. If you use Ollama with local GGUF models (`Qwen2.5-Coder`), Lathe runs 100% offline with zero external network connectivity. Internet is only required if you explicitly choose the Hugging Face Serverless API backend (`backend = "hf"`).
@@ -975,7 +1123,7 @@ Every write operation creates a Git shadow commit before applying changes. If a 
 
 ---
 
-## 14. Keyboard Shortcuts
+## 15. Keyboard Shortcuts
 
 Available in the Lathe REPL:
 
@@ -992,7 +1140,7 @@ Available in the Lathe REPL:
 
 ---
 
-## 15. Glossary of Terms
+## 16. Glossary of Terms
 
 - **AST (Abstract Syntax Tree)**: Structural representation of source code parsed by Tree-sitter, used by Lathe to build the repository symbol map.
 - **Compaction**: The process of summarizing older conversation turns and pruning tool outputs when context usage exceeds 75%.
@@ -1006,4 +1154,4 @@ Available in the Lathe REPL:
 
 ---
 
-*Lathe User Manual · Version 0.1.0 · Generated with Playwright & VHS*
+*Lathe User Manual · Version 1.0.0 · Generated with Playwright & VHS*

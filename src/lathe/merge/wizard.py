@@ -41,6 +41,7 @@ def run_merge_wizard(
     out_console: Console | None = None,
 ) -> None:
     """Run the step-by-step interactive model merge wizard."""
+    Path("merges").mkdir(parents=True, exist_ok=True)
     out = out_console or console
     is_interactive = interactive and sys.stdin.isatty()
 

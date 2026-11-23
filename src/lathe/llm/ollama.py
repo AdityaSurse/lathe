@@ -37,23 +37,15 @@ class OllamaClient(LLMClient):
             return self._custom_client
         return httpx.AsyncClient(timeout=self.timeout)
 
-    def _format_messages(self, messages: list[Message]) -> list[dict[str, Any]]:
+    def _format_messages(
+        self,
+        messages: list[Message],
+        support_system: bool = True,
+    ) -> list[dict[str, Any]]:
         """Serialize domain messages into Ollama chat wire format."""
-        formatted: list[dict[str, Any]] = []
-        for msg in messages:
-            entry: dict[str, Any] = {"role": msg.role, "content": msg.content}
-            if msg.tool_calls:
-                entry["tool_calls"] = [
-                    {
-                        "function": {
-                            "name": tc.name,
-                            "arguments": tc.arguments,
-                        }
-                    }
-                    for tc in msg.tool_calls
-                ]
-            formatted.append(entry)
-        return formatted
+        from lathe.models.presets import format_messages_with_system_fallback
+
+        return format_messages_with_system_fallback(messages, support_system=support_system)
 
     def _build_payload(
         self,
@@ -107,6 +99,23 @@ class OllamaClient(LLMClient):
                             model_name=self.role_config.model,
                             suggestion=f"Pull it using: `ollama pull {self.role_config.model}`",
                         )
+                    # Check if model template lacks system-role support
+                    if (
+                        "system" in body_text.lower()
+                        and ("role" in body_text.lower() or "support" in body_text.lower())
+                        and any(m.get("role") == "system" for m in payload.get("messages", []))
+                    ):
+                        from lathe.models.presets import format_messages_with_system_fallback
+
+                        raw_msgs = [
+                            Message(role=m["role"], content=m.get("content", ""))
+                            for m in payload.get("messages", [])
+                        ]
+                        payload["messages"] = format_messages_with_system_fallback(
+                            raw_msgs, support_system=False
+                        )
+                        continue
+
                     raise LLMError(
                         f"Ollama returned HTTP error {response.status_code}: {body_text}"
                     )

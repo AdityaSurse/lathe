@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Lathe User Manual v0.1.0</title>
+<title>Lathe User Manual v1.0.0</title>
 <style>
   /* Base Reset & Typography */
   *, *::before, *::after {
@@ -12,8 +12,11 @@
     size: A4;
     margin: 18mm 14mm 18mm 14mm;
   }
+  @page :first {
+    margin: 0;
+  }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     font-size: 10.5pt;
     line-height: 1.55;
     color: #1e293b;
@@ -25,45 +28,79 @@
   /* Cover Page */
   .cover-page {
     page-break-after: always;
-    min-height: 90vh;
+    page-break-before: avoid;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 297mm;
+    height: 297mm;
+    max-height: 297mm;
+    overflow: hidden;
+    background-color: #0B0B12;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     text-align: center;
-    background: radial-gradient(circle at 50% 30%, #0f172a 0%, #070a13 100%);
-    color: #ffffff;
-    padding: 40px 20px;
-    border-radius: 8px;
-    margin-bottom: 30px;
+    padding: 55mm 20mm 25mm 20mm;
+    margin: 0;
+  }
+  .cover-upper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
   }
   .cover-logo {
-    max-width: 440px;
-    height: auto;
+    width: 170px;
+    height: 170px;
     margin-bottom: 24px;
-    filter: drop-shadow(0 0 25px rgba(56, 189, 248, 0.45));
+    filter: drop-shadow(0 0 35px rgba(34, 211, 238, 0.4));
+    border-radius: 36px;
+    border: none !important;
+    box-shadow: none !important;
   }
-  .cover-title {
-    font-size: 32pt;
+  .cover-app-title {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 40pt;
     font-weight: 800;
-    letter-spacing: -0.5px;
-    color: #ffffff;
-    margin: 0 0 12px 0;
+    color: #FFFFFF;
+    letter-spacing: -1px;
+    margin: 0 0 6px 0;
   }
   .cover-subtitle {
-    font-size: 13pt;
-    color: #38bdf8;
-    max-width: 600px;
-    margin: 0 0 32px 0;
-    font-weight: 500;
-    line-height: 1.4;
+    font-size: 18pt;
+    font-weight: 600;
+    color: #22D3EE;
+    letter-spacing: 0.5px;
+    margin: 0 0 12px 0;
   }
-  .cover-meta {
+  .cover-tagline {
+    font-size: 12.5pt;
+    color: #94A3B8;
+    font-style: italic;
+    margin: 0 0 24px 0;
+  }
+  .cover-accent-line {
+    width: 140px;
+    height: 4px;
+    background: linear-gradient(90deg, #22D3EE 0%, #E040FB 50%, #FF7A45 100%);
+    border-radius: 2px;
+  }
+  .cover-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  .cover-version {
+    font-size: 11pt;
+    font-weight: 700;
+    color: #F8FAFC;
+    margin-bottom: 4px;
+  }
+  .cover-date {
     font-size: 10pt;
-    color: #94a3b8;
-    border-top: 1px solid #334155;
-    padding-top: 16px;
-    width: 320px;
+    color: #64748B;
   }
   .cover-meta p {
     margin: 4px 0;
@@ -336,23 +373,21 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 
 <!-- Cover Page -->
 <div class="cover-page">
-  <img class='cover-logo' src='file:///Users/adityasurse/Documents/lathe%20agent/assets/logo.png' alt='Lathe Logo' />
-  <div class="cover-title">Lathe User Manual</div>
-  <div class="cover-subtitle">Autonomous Terminal AI Coding Agent Powered by Dual Open-Source Models & Automated Merging</div>
-  <div class="cover-meta">
-    <p><strong>Version:</strong> v0.1.0</p>
-    <p><strong>Release Date:</strong> November 2026</p>
-    <p><strong>Author:</strong> Aditya Surse & Lathe Contributors</p>
-    <p><strong>License:</strong> Apache-2.0</p>
+  <div class="cover-upper">
+    <img class="cover-logo" src="data:image/png;base64,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AQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAuQp8AAAADEVJREFUECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAAAOufAIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQIAAAAAAAAECAAAAAAQIAAAAABAgAAAAAECAAAAAAAABAgAAAAAECAAAAAAQIAAAAABAgAAAAAAAAQIAAAAABAgAAAAAECAAAAAAQMDq4mVzc3M2AAAAgCvWvwEAAP//monOmwAAAAZJREFUAwBRx1wxFuORDgAAAABJRU5ErkJggg==" alt="Lathe Logo" />
+    <h1 class="cover-app-title">Lathe</h1>
+    <div class="cover-subtitle">User Manual</div>
+    <div class="cover-tagline">Turn prompts into code. Locally.</div>
+    <div class="cover-accent-line"></div>
+  </div>
+  <div class="cover-footer">
+    <div class="cover-version">v1.0.0</div>
+    <div class="cover-date">November 23, 2026</div>
   </div>
 </div>
 
 <!-- Main Body -->
 <div class="manual-content">
-<p><strong>Autonomous Terminal AI Coding Agent Powered by Dual Open-Source Models &amp; Automated Merging</strong></p>
-<p>Version 0.1.0 · November 2026</p>
-<p><img alt="Lathe Logo" src="file:///Users/adityasurse/Documents/lathe%20agent/assets/logo.png" /></p>
-<hr />
 <h2 id="table-of-contents">Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
 <ol>
 <li><a href="#1-what-is-lathe">What is Lathe</a></li>
@@ -391,11 +426,18 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <li><a href="#8-complete-slash-command-reference">Complete Slash Command Reference</a></li>
 <li><a href="#9-configuration-reference-lathetoml">Configuration Reference (lathe.toml)</a></li>
 <li><a href="#10-choosing--sizing-models">Choosing &amp; Sizing Models</a></li>
-<li><a href="#11-safety-threat-model--blocked-commands">Safety, Threat Model &amp; Blocked Commands</a></li>
-<li><a href="#12-troubleshooting--error-recovery">Troubleshooting &amp; Error Recovery</a></li>
-<li><a href="#13-frequently-asked-questions-faq">Frequently Asked Questions (FAQ)</a></li>
-<li><a href="#14-keyboard-shortcuts">Keyboard Shortcuts</a></li>
-<li><a href="#15-glossary-of-terms">Glossary of Terms</a></li>
+<li><a href="#11-using-google-gemma">Using Google Gemma</a></li>
+<li><a href="#why-gemma">Why Gemma?</a></li>
+<li><a href="#model-sizes--memory-footprint">Model Sizes &amp; Memory Footprint</a></li>
+<li><a href="#hardware-sizing-guidance">Hardware Sizing Guidance</a></li>
+<li><a href="#preset-comparison-qwen-vs-gemma-vs-mixed">Preset Comparison: Qwen vs Gemma vs Mixed</a></li>
+<li><a href="#switching-presets-in-lathe">Switching Presets in Lathe</a></li>
+<li><a href="#gemma-architecture--compatibility-features">Gemma Architecture &amp; Compatibility Features</a></li>
+<li><a href="#12-safety-threat-model--blocked-commands">Safety, Threat Model &amp; Blocked Commands</a></li>
+<li><a href="#13-troubleshooting--error-recovery">Troubleshooting &amp; Error Recovery</a></li>
+<li><a href="#14-frequently-asked-questions-faq">Frequently Asked Questions (FAQ)</a></li>
+<li><a href="#15-keyboard-shortcuts">Keyboard Shortcuts</a></li>
+<li><a href="#16-glossary-of-terms">Glossary of Terms</a></li>
 </ol>
 <hr />
 <h2 id="1-what-is-lathe">1. What is Lathe<a class="headerlink" href="#1-what-is-lathe" title="Permanent link">&para;</a></h2>
@@ -1115,23 +1157,28 @@ lathe<span class="w"> </span>tool<span class="w"> </span>edit_file
 </code></pre></div>
 
 <h4 id="lathe-bench-models"><code>lathe bench [MODELS...]</code><a class="headerlink" href="#lathe-bench-models" title="Permanent link">&para;</a></h4>
-<p>Run the Lathe mini-bench evaluation suite across models.</p>
+<p>Run the Lathe mini-bench evaluation suite across models or presets.</p>
 <div class="highlight"><pre><span></span><code>lathe<span class="w"> </span>bench
+lathe<span class="w"> </span>bench<span class="w"> </span>--preset<span class="w"> </span>gemma<span class="w"> </span>--preset<span class="w"> </span>qwen
 lathe<span class="w"> </span>bench<span class="w"> </span>qwen2.5-coder:7b<span class="w"> </span>lathe-merged
 lathe<span class="w"> </span>bench<span class="w"> </span>--limit<span class="w"> </span><span class="m">10</span><span class="w"> </span>--output-dir<span class="w"> </span>./bench/results
 </code></pre></div>
 
 <h4 id="lathe-config"><code>lathe config</code><a class="headerlink" href="#lathe-config" title="Permanent link">&para;</a></h4>
 <p>Inspect and manage configuration files.</p>
-<div class="highlight"><pre><span></span><code>lathe<span class="w"> </span>config<span class="w"> </span>path<span class="w">            </span><span class="c1"># Print paths of global and project lathe.toml</span>
+<div class="highlight"><pre><span></span><code>lathe<span class="w"> </span>config<span class="w"> </span>init<span class="w">            </span><span class="c1"># Initialize lathe.toml (default qwen preset)</span>
+lathe<span class="w"> </span>config<span class="w"> </span>init<span class="w"> </span>--preset<span class="w"> </span>gemma<span class="w">  </span><span class="c1"># Initialize with Google Gemma preset</span>
+lathe<span class="w"> </span>config<span class="w"> </span>path<span class="w">            </span><span class="c1"># Print paths of global and project lathe.toml</span>
 lathe<span class="w"> </span>config<span class="w"> </span>show<span class="w">            </span><span class="c1"># Display active merged TOML configuration</span>
 lathe<span class="w"> </span>config<span class="w"> </span>get<span class="w"> </span>&lt;KEY&gt;<span class="w">       </span><span class="c1"># Read value (e.g. lathe config get settings.mode)</span>
 lathe<span class="w"> </span>config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>&lt;KEY&gt;<span class="w"> </span>&lt;VAL&gt;<span class="w"> </span><span class="c1"># Write value (e.g. lathe config set settings.mode dual)</span>
 </code></pre></div>
 
 <h4 id="lathe-models"><code>lathe models</code><a class="headerlink" href="#lathe-models" title="Permanent link">&para;</a></h4>
-<p>Inspect and configure local and remote models.</p>
-<div class="highlight"><pre><span></span><code>lathe<span class="w"> </span>models<span class="w"> </span>search<span class="w"> </span>&lt;QUERY&gt;<span class="w">  </span><span class="c1"># Search GGUF repositories on Hugging Face Hub</span>
+<p>Inspect and configure local, remote, and preset models.</p>
+<div class="highlight"><pre><span></span><code>lathe<span class="w"> </span>models<span class="w"> </span>presets<span class="w">         </span><span class="c1"># List available presets (qwen, gemma, mixed) with pull status</span>
+lathe<span class="w"> </span>models<span class="w"> </span>preset<span class="w"> </span>&lt;NAME&gt;<span class="w">   </span><span class="c1"># Pull models for preset and apply to lathe.toml (e.g. lathe models preset gemma)</span>
+lathe<span class="w"> </span>models<span class="w"> </span>search<span class="w"> </span>&lt;QUERY&gt;<span class="w">  </span><span class="c1"># Search GGUF repositories on Hugging Face Hub</span>
 lathe<span class="w"> </span>models<span class="w"> </span>pull<span class="w"> </span>&lt;REPO_ID&gt;<span class="w">  </span><span class="c1"># Download and register model in Ollama</span>
 lathe<span class="w"> </span>models<span class="w"> </span>list<span class="w">            </span><span class="c1"># Show local Ollama models with RAM estimates</span>
 lathe<span class="w"> </span>models<span class="w"> </span>probe<span class="w"> </span>&lt;MODEL&gt;<span class="w">   </span><span class="c1"># Test model tool calling and JSON capabilities</span>
@@ -1141,8 +1188,9 @@ lathe<span class="w"> </span>models<span class="w"> </span>use<span class="w"> <
 <h4 id="lathe-merge"><code>lathe merge</code><a class="headerlink" href="#lathe-merge" title="Permanent link">&para;</a></h4>
 <p>Interactive model merging wizard powered by mergekit.</p>
 <div class="highlight"><pre><span></span><code>lathe<span class="w"> </span>merge<span class="w">                  </span><span class="c1"># Interactive merge wizard</span>
+lathe<span class="w"> </span>merge<span class="w"> </span>qwen-1.5b<span class="w">        </span><span class="c1"># Run start-small preset (Qwen 1.5B Coder + Instruct)</span>
 lathe<span class="w"> </span>merge<span class="w"> </span>&lt;NAME&gt;<span class="w">           </span><span class="c1"># Name merge output directory</span>
-lathe<span class="w"> </span>merge<span class="w"> </span>--preset<span class="w">         </span><span class="c1"># Use start-small preset (Qwen 1.5B Coder + Instruct)</span>
+lathe<span class="w"> </span>merge<span class="w"> </span>--preset<span class="w">         </span><span class="c1"># Use start-small preset</span>
 lathe<span class="w"> </span>merge<span class="w"> </span>--colab<span class="w">          </span><span class="c1"># Generate Google Colab notebook (.ipynb)</span>
 lathe<span class="w"> </span>merge<span class="w"> </span>push<span class="w"> </span>&lt;NAME&gt;<span class="w">      </span><span class="c1"># Upload merges/&lt;NAME&gt; to Hugging Face Hub</span>
 lathe<span class="w"> </span>merge<span class="w"> </span>gguf<span class="w"> </span>&lt;NAME&gt;<span class="w">      </span><span class="c1"># Convert to GGUF, quantize, and import into Ollama</span>
@@ -1502,6 +1550,33 @@ lathe<span class="w"> </span>merge<span class="w"> </span>gguf<span class="w"> <
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
 </code></pre></div>
 
+<h4 id="google-gemma-preset-lathetoml">Google Gemma Preset <code>lathe.toml</code><a class="headerlink" href="#google-gemma-preset-lathetoml" title="Permanent link">&para;</a></h4>
+<p>When switched to the Gemma preset (<code>lathe models preset gemma</code> or <code>lathe config init --preset gemma</code>), the <code>[roles]</code> section is automatically configured as follows:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[settings]</span>
+<span class="n">mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"auto"</span>
+
+<span class="k">[roles.planner]</span>
+<span class="n">backend</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"ollama"</span>
+<span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"gemma4:e4b"</span>
+<span class="n">temperature</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.6</span>
+<span class="n">max_tokens</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">4096</span>
+<span class="n">context_window</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">32768</span>
+
+<span class="k">[roles.coder]</span>
+<span class="n">backend</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"ollama"</span>
+<span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"gemma4:e4b"</span>
+<span class="n">temperature</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.2</span>
+<span class="n">max_tokens</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">4096</span>
+<span class="n">context_window</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">32768</span>
+
+<span class="k">[roles.router]</span>
+<span class="n">backend</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"ollama"</span>
+<span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"gemma4:e2b"</span>
+<span class="n">temperature</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span>
+<span class="n">max_tokens</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1024</span>
+<span class="n">context_window</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">32768</span>
+</code></pre></div>
+
 <hr />
 <h2 id="10-choosing-sizing-models">10. Choosing &amp; Sizing Models<a class="headerlink" href="#10-choosing-sizing-models" title="Permanent link">&para;</a></h2>
 <h3 id="hardware-tiers-sizing">Hardware Tiers &amp; Sizing<a class="headerlink" href="#hardware-tiers-sizing" title="Permanent link">&para;</a></h3>
@@ -1539,7 +1614,162 @@ Always select repositories that provide <strong>single-file quantizations</stron
 - ✅ <strong>Recommended</strong>: <code>hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M</code>
 - ❌ <strong>Avoid</strong>: Multi-file split GGUFs (<code>*-00001-of-*.gguf</code>)</p>
 <hr />
-<h2 id="11-safety-threat-model-blocked-commands">11. Safety, Threat Model &amp; Blocked Commands<a class="headerlink" href="#11-safety-threat-model-blocked-commands" title="Permanent link">&para;</a></h2>
+<hr />
+<h2 id="11-using-google-gemma">11. Using Google Gemma<a class="headerlink" href="#11-using-google-gemma" title="Permanent link">&para;</a></h2>
+<p>Lathe provides native first-class support for Google Gemma models (<code>gemma4:e2b</code>, <code>gemma4:e4b</code>) alongside Qwen. With the built-in preset system, switching your entire developer environment between Qwen and Gemma takes a single command.</p>
+<p><img alt="Lathe Model Presets" src="assets/manual/images/models_presets.png" /></p>
+<h3 id="why-gemma">Why Gemma?<a class="headerlink" href="#why-gemma" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Open Weights from Google</strong>: State-of-the-art reasoning and code comprehension built on Google DeepMind research.</li>
+<li><strong>Permissive Open License</strong>: Open weights allowing commercial and local development without cloud telemetry.</li>
+<li><strong>Native Ollama Integration</strong>: Fully supported in Ollama with optimized quantization, native tool calling, and high tokens/sec generation on Apple Silicon and modern x86 GPUs.</li>
+<li><strong>Exceptional Efficiency</strong>: Gemma 2B and 4B offer remarkable coding ability at small parameter sizes, running smoothly on laptops with limited unified RAM.</li>
+</ul>
+<hr />
+<h3 id="model-sizes-memory-footprint">Model Sizes &amp; Memory Footprint<a class="headerlink" href="#model-sizes-memory-footprint" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Gemma Model</th>
+<th style="text-align: left;">Parameter Count</th>
+<th style="text-align: left;">Quantization</th>
+<th style="text-align: left;">RAM / VRAM Usage</th>
+<th style="text-align: left;">Lathe Role Recommendation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong><code>gemma4:e2b</code></strong></td>
+<td style="text-align: left;">2 Billion</td>
+<td style="text-align: left;">4-bit (<code>Q4_K_M</code>)</td>
+<td style="text-align: left;"><strong>~4.6 GB – 7.5 GB</strong></td>
+<td style="text-align: left;"><strong>Router &amp; Fast Chat</strong> (instant routing, commit summaries)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>gemma4:e4b</code></strong></td>
+<td style="text-align: left;">4 Billion</td>
+<td style="text-align: left;">4-bit (<code>Q4_K_M</code>)</td>
+<td style="text-align: left;"><strong>~6.6 GB – 9.5 GB</strong></td>
+<td style="text-align: left;"><strong>Coder &amp; Planner</strong> (structured coding, test authoring)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>gemma4:e9b</code></strong></td>
+<td style="text-align: left;">9 Billion</td>
+<td style="text-align: left;">4-bit (<code>Q4_K_M</code>)</td>
+<td style="text-align: left;"><strong>~12.5 GB – 16 GB</strong></td>
+<td style="text-align: left;"><strong>High-Capacity Coder &amp; Planner</strong> (for 32 GB+ workstations)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="hardware-sizing-guidance">Hardware Sizing Guidance<a class="headerlink" href="#hardware-sizing-guidance" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>8 GB RAM (MacBook Air M1/M2/M3 / Standard Laptops)</strong>:</li>
+<li>Run <code>gemma4:e2b</code> as the primary coder and router. Gemma 2B fits comfortably in memory while leaving sufficient headroom for the OS and editors.</li>
+<li><strong>16 GB RAM (MacBook Pro / Developer Laptops)</strong>:</li>
+<li>Run the complete <strong><code>gemma</code> preset</strong>: <code>gemma4:e4b</code> as the coder and planner, with <code>gemma4:e2b</code> as the high-speed router. Memory stays well under 10 GB, leaving ample room for compilers and browser tabs.</li>
+<li><strong>32 GB+ RAM (Mac Studio / Multi-GPU Workstations)</strong>:</li>
+<li>Run full-precision or larger Gemma variants (<code>gemma4:e9b</code>) or the <strong><code>mixed</code> preset</strong> combining DeepSeek-R1 reasoning with Gemma routing.</li>
+</ul>
+<hr />
+<h3 id="preset-comparison-qwen-vs-gemma-vs-mixed">Preset Comparison: Qwen vs Gemma vs Mixed<a class="headerlink" href="#preset-comparison-qwen-vs-gemma-vs-mixed" title="Permanent link">&para;</a></h3>
+<p>Lathe defines three curated presets in <code>src/lathe/models/presets.py</code>:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Metric / Capability</th>
+<th style="text-align: left;"><code>qwen</code> Preset (Default)</th>
+<th style="text-align: left;"><code>gemma</code> Preset (Google)</th>
+<th style="text-align: left;"><code>mixed</code> Preset (Hybrid)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Coder Model</strong></td>
+<td style="text-align: left;"><code>Qwen2.5-Coder-7B-Instruct</code></td>
+<td style="text-align: left;"><code>gemma4:e4b</code></td>
+<td style="text-align: left;"><code>Qwen2.5-Coder-7B-Instruct</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Router Model</strong></td>
+<td style="text-align: left;"><code>Qwen2.5-Coder-1.5B-Instruct</code></td>
+<td style="text-align: left;"><code>gemma4:e2b</code></td>
+<td style="text-align: left;"><code>gemma4:e2b</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Planner Model</strong></td>
+<td style="text-align: left;"><code>DeepSeek-R1-Distill-Qwen-7B</code></td>
+<td style="text-align: left;"><code>gemma4:e4b</code></td>
+<td style="text-align: left;"><code>DeepSeek-R1-Distill-Qwen-7B</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>RAM Footprint</strong></td>
+<td style="text-align: left;">~6.0 GB</td>
+<td style="text-align: left;">~6.8 GB</td>
+<td style="text-align: left;">~6.2 GB</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Generation Speed</strong></td>
+<td style="text-align: left;">~42 tokens/sec</td>
+<td style="text-align: left;">~48 tokens/sec</td>
+<td style="text-align: left;">~46 tokens/sec</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Coding Strength</strong></td>
+<td style="text-align: left;">Exceptional syntax &amp; refactoring</td>
+<td style="text-align: left;">Crisp logic &amp; concise functions</td>
+<td style="text-align: left;">Maximum coding precision</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Dual-LLM Fit</strong></td>
+<td style="text-align: left;">Dedicated reasoning planner</td>
+<td style="text-align: left;">Cohesive single-family planning</td>
+<td style="text-align: left;">Best of both worlds</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="switching-presets-in-lathe">Switching Presets in Lathe<a class="headerlink" href="#switching-presets-in-lathe" title="Permanent link">&para;</a></h3>
+<p>Lathe makes switching between model families instantaneous:</p>
+<h4 id="1-inspect-available-presets">1. Inspect Available Presets<a class="headerlink" href="#1-inspect-available-presets" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>lathe<span class="w"> </span>models<span class="w"> </span>presets
+</code></pre></div>
+
+<p>Displays all configured presets and indicates which weights are already cached in Ollama.</p>
+<h4 id="2-switch-to-google-gemma">2. Switch to Google Gemma<a class="headerlink" href="#2-switch-to-google-gemma" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>lathe<span class="w"> </span>models<span class="w"> </span>preset<span class="w"> </span>gemma
+</code></pre></div>
+
+<p>This automatically:
+1. Pulls <code>gemma4:e4b</code> and <code>gemma4:e2b</code> from Ollama if they are not already installed.
+2. Updates <code>.lathe/lathe.toml</code> with the Gemma roles.
+3. Configures temperature (0.2 for coder, 0.6 for planner) and context window (32,768).</p>
+<p>You can also initialize a new project with Gemma directly:</p>
+<div class="highlight"><pre><span></span><code>lathe<span class="w"> </span>config<span class="w"> </span>init<span class="w"> </span>--preset<span class="w"> </span>gemma
+</code></pre></div>
+
+<h4 id="3-switch-back-to-qwen">3. Switch Back to Qwen<a class="headerlink" href="#3-switch-back-to-qwen" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>lathe<span class="w"> </span>models<span class="w"> </span>preset<span class="w"> </span>qwen
+</code></pre></div>
+
+<h4 id="4-interactive-gemma-session">4. Interactive Gemma Session<a class="headerlink" href="#4-interactive-gemma-session" title="Permanent link">&para;</a></h4>
+<p><img alt="Gemma Session" src="assets/manual/images/gemma_session.png" /></p>
+<hr />
+<h3 id="gemma-architecture-compatibility-features">Gemma Architecture &amp; Compatibility Features<a class="headerlink" href="#gemma-architecture-compatibility-features" title="Permanent link">&para;</a></h3>
+<p>Lathe includes built-in compatibility adaptations specifically tuned for Gemma:</p>
+<ol>
+<li><strong>Automatic System-Role Fallback</strong>: Some Gemma prompt templates do not support the <code>"system"</code> role natively in Ollama. If an Ollama call rejects the system role, Lathe's <code>format_messages_with_system_fallback()</code> automatically prepends the system prompt to the first user message:
+   ```
+   [System Guidelines]
+   <System Prompt></li>
+</ol>
+<p>[User Request]
+   <User Message>
+   <code>``
+2. **Thinking / Reasoning Block Stripping**: Gemma variants that output chain-of-thought blocks (</code><think>...</think><code>or</code><thought>...</thought><code>) before generating JSON plans are automatically cleaned by Lathe's</code>strip_thinking_blocks()<code>filter before Pydantic schema validation.
+3. **Per-Family Context &amp; Temperature**: Gemma models run at temperature</code>0.2<code>for the coder role (ensuring deterministic syntax) and</code>0.6` for the planner role, with a native 32,768 token context window.</p>
+<hr />
+<h2 id="12-safety-threat-model-blocked-commands">12. Safety, Threat Model &amp; Blocked Commands<a class="headerlink" href="#12-safety-threat-model-blocked-commands" title="Permanent link">&para;</a></h2>
 <h3 id="what-lathe-will-never-do">What Lathe Will NEVER Do<a class="headerlink" href="#what-lathe-will-never-do" title="Permanent link">&para;</a></h3>
 <ol>
 <li><strong>Never send telemetry</strong>: Lathe transmits zero telemetry, code samples, or analytics to any remote server.</li>
@@ -1550,13 +1780,13 @@ Always select repositories that provide <strong>single-file quantizations</stron
 <h3 id="hard-blocklist">Hard Blocklist<a class="headerlink" href="#hard-blocklist" title="Permanent link">&para;</a></h3>
 <p>Lathe enforces an immutable security blocklist that rejects commands even if <code>--yolo</code> is specified:</p>
 <div class="highlight"><pre><span></span><code><span class="n">FORBIDDEN_PATTERNS</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="sa">r</span><span class="s2">"\brm\s+-(?:r|f|rf|fr)\s+(?:/|~|\$HOME)\b"</span><span class="p">,</span> <span class="c1"># Recursive root/home deletion</span>
-    <span class="sa">r</span><span class="s2">"\bmkfs\b"</span><span class="p">,</span>                                 <span class="c1"># Filesystem formatting</span>
-    <span class="sa">r</span><span class="s2">"\bdd\s+if=.*of=/dev/(?:sd|nvme|hd|vd)"</span><span class="p">,</span>    <span class="c1"># Direct block device overwrites</span>
-    <span class="sa">r</span><span class="s2">":\(\)\s*\{\s*:\s*\|\s*:\s*&amp;\s*\}\s*;"</span><span class="p">,</span>    <span class="c1"># Shell fork bombs</span>
-    <span class="sa">r</span><span class="s2">"\b(?:bash|sh|zsh)\s+-i\s+&gt;&amp;"</span><span class="p">,</span>              <span class="c1"># Reverse shells</span>
-    <span class="sa">r</span><span class="s2">"\bchmod\s+-[rR]\s+777\s+/\b"</span><span class="p">,</span>              <span class="c1"># Global permissions wipe</span>
-    <span class="sa">r</span><span class="s2">"\bgit\s+reset\s+--hard\b"</span><span class="p">,</span>                 <span class="c1"># Destructive unstaged git wipe</span>
+    <span class="sa">r</span><span class="s2">"\brm\s+-(?:r|f|rf|fr)\s+(?:/|~|\$HOME)\b"</span><span class="p">,</span>  <span class="c1"># Recursive root/home deletion</span>
+    <span class="sa">r</span><span class="s2">"\bmkfs\b"</span><span class="p">,</span>  <span class="c1"># Filesystem formatting</span>
+    <span class="sa">r</span><span class="s2">"\bdd\s+if=.*of=/dev/(?:sd|nvme|hd|vd)"</span><span class="p">,</span>  <span class="c1"># Direct block device overwrites</span>
+    <span class="sa">r</span><span class="s2">":\(\)\s*\{\s*:\s*\|\s*:\s*&amp;\s*\}\s*;"</span><span class="p">,</span>  <span class="c1"># Shell fork bombs</span>
+    <span class="sa">r</span><span class="s2">"\b(?:bash|sh|zsh)\s+-i\s+&gt;&amp;"</span><span class="p">,</span>  <span class="c1"># Reverse shells</span>
+    <span class="sa">r</span><span class="s2">"\bchmod\s+-[rR]\s+777\s+/\b"</span><span class="p">,</span>  <span class="c1"># Global permissions wipe</span>
+    <span class="sa">r</span><span class="s2">"\bgit\s+reset\s+--hard\b"</span><span class="p">,</span>  <span class="c1"># Destructive unstaged git wipe</span>
 <span class="p">]</span>
 </code></pre></div>
 
@@ -1565,7 +1795,7 @@ Always select repositories that provide <strong>single-file quantizations</stron
 1. Type <code>/undo</code> to revert the last action.
 2. Or run <code>/checkpoints</code> to view all saved restore points and <code>/restore &lt;n&gt;</code> to roll back to any point in time.</p>
 <hr />
-<h2 id="12-troubleshooting-error-recovery">12. Troubleshooting &amp; Error Recovery<a class="headerlink" href="#12-troubleshooting-error-recovery" title="Permanent link">&para;</a></h2>
+<h2 id="13-troubleshooting-error-recovery">13. Troubleshooting &amp; Error Recovery<a class="headerlink" href="#13-troubleshooting-error-recovery" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -1615,10 +1845,20 @@ Always select repositories that provide <strong>single-file quantizations</stron
 <td style="text-align: left;">Model too large for GPU VRAM, spilling into CPU swap.</td>
 <td style="text-align: left;">Switch to a smaller quant (<code>Q4_K_M</code> instead of <code>Q8_0</code>) or a 1.5B/7B model.</td>
 </tr>
+<tr>
+<td style="text-align: left;"><strong>Gemma template rejects <code>system</code> role</strong></td>
+<td style="text-align: left;">Ollama chat template lacks native system role field.</td>
+<td style="text-align: left;">Automatically handled by Lathe: prepends system instructions to first user message.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Gemma outputs <code>&lt;think&gt;</code> reasoning before JSON</strong></td>
+<td style="text-align: left;">Model emits internal thinking blocks before plan.</td>
+<td style="text-align: left;">Automatically handled by Lathe: stripped before schema validation.</td>
+</tr>
 </tbody>
 </table>
 <hr />
-<h2 id="13-frequently-asked-questions-faq">13. Frequently Asked Questions (FAQ)<a class="headerlink" href="#13-frequently-asked-questions-faq" title="Permanent link">&para;</a></h2>
+<h2 id="14-frequently-asked-questions-faq">14. Frequently Asked Questions (FAQ)<a class="headerlink" href="#14-frequently-asked-questions-faq" title="Permanent link">&para;</a></h2>
 <h3 id="q-does-lathe-require-an-active-internet-connection">Q: Does Lathe require an active internet connection?<a class="headerlink" href="#q-does-lathe-require-an-active-internet-connection" title="Permanent link">&para;</a></h3>
 <p><strong>A</strong>: No. If you use Ollama with local GGUF models (<code>Qwen2.5-Coder</code>), Lathe runs 100% offline with zero external network connectivity. Internet is only required if you explicitly choose the Hugging Face Serverless API backend (<code>backend = "hf"</code>).</p>
 <h3 id="q-can-lathe-edit-multiple-files-at-once">Q: Can Lathe edit multiple files at once?<a class="headerlink" href="#q-can-lathe-edit-multiple-files-at-once" title="Permanent link">&para;</a></h3>
@@ -1628,7 +1868,7 @@ Always select repositories that provide <strong>single-file quantizations</stron
 <h3 id="q-what-is-the-difference-between-single-mode-and-dual-mode">Q: What is the difference between Single Mode and Dual Mode?<a class="headerlink" href="#q-what-is-the-difference-between-single-mode-and-dual-mode" title="Permanent link">&para;</a></h3>
 <p><strong>A</strong>: Single Mode uses one model for everything in a standard loop. Dual Mode splits planning and coding: a reasoning model constructs a verified plan, and a coding model executes each step with focused context and reviewer verification.</p>
 <hr />
-<h2 id="14-keyboard-shortcuts">14. Keyboard Shortcuts<a class="headerlink" href="#14-keyboard-shortcuts" title="Permanent link">&para;</a></h2>
+<h2 id="15-keyboard-shortcuts">15. Keyboard Shortcuts<a class="headerlink" href="#15-keyboard-shortcuts" title="Permanent link">&para;</a></h2>
 <p>Available in the Lathe REPL:</p>
 <table>
 <thead>
@@ -1673,7 +1913,7 @@ Always select repositories that provide <strong>single-file quantizations</stron
 </tbody>
 </table>
 <hr />
-<h2 id="15-glossary-of-terms">15. Glossary of Terms<a class="headerlink" href="#15-glossary-of-terms" title="Permanent link">&para;</a></h2>
+<h2 id="16-glossary-of-terms">16. Glossary of Terms<a class="headerlink" href="#16-glossary-of-terms" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>AST (Abstract Syntax Tree)</strong>: Structural representation of source code parsed by Tree-sitter, used by Lathe to build the repository symbol map.</li>
 <li><strong>Compaction</strong>: The process of summarizing older conversation turns and pruning tool outputs when context usage exceeds 75%.</li>
@@ -1686,7 +1926,7 @@ Always select repositories that provide <strong>single-file quantizations</stron
 <li><strong>TIES</strong>: Trimming, Resolving Interference, and Electing Sign — a model merging technique for combining task-specific checkpoints.</li>
 </ul>
 <hr />
-<p><em>Lathe User Manual · Version 0.1.0 · Generated with Playwright &amp; VHS</em></p>
+<p><em>Lathe User Manual · Version 1.0.0 · Generated with Playwright &amp; VHS</em></p>
 </div>
 
 <!-- Offline Mermaid Script -->
