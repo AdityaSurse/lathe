@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "lathe-agent"
-version = "1.0.0"
+version = "1.1.0"
 description = "Terminal AI coding agent powered by dual open-source models and automated merging."
 readme = "README.md"
 requires-python = ">=3.11"
