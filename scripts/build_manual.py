@@ -7,8 +7,10 @@ a complete, publication-quality PDF via Playwright (Chromium).
 
 from __future__ import annotations
 
+import base64
 import re
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import markdown
@@ -30,7 +32,15 @@ def load_version() -> str:
         for line in pyproject.read_text(encoding="utf-8").splitlines():
             if line.startswith("version ="):
                 return line.split("=")[1].strip().strip('"')
-    return "0.1.0"
+    return "1.0.0"
+
+
+def get_logo_data_uri() -> str:
+    """Read assets/logo.png and return as base64 data URI."""
+    if LOGO_PATH.exists():
+        data = base64.b64encode(LOGO_PATH.read_bytes()).decode("ascii")
+        return f"data:image/png;base64,{data}"
+    return ""
 
 
 def transform_callouts(md_text: str) -> str:
@@ -101,12 +111,14 @@ def generate_html(md_content: str, version: str) -> str:
     text = process_mermaid_blocks(text)
     text = resolve_image_paths(text)
 
-    # Separate cover and main body
-    lines = text.splitlines()
-    # Strip primary h1 for custom cover page
-    if lines and lines[0].startswith("# "):
-        lines = lines[1:]
-    body_md = "\n".join(lines)
+    # Separate cover and main body: start body at Table of Contents
+    if "## Table of Contents" in text:
+        body_md = text[text.find("## Table of Contents") :]
+    else:
+        lines = text.splitlines()
+        if lines and lines[0].startswith("# "):
+            lines = lines[1:]
+        body_md = "\n".join(lines)
 
     # Convert to HTML via markdown package
     html_body = markdown.markdown(
@@ -139,7 +151,8 @@ def generate_html(md_content: str, version: str) -> str:
     if MERMAID_JS_PATH.exists():
         mermaid_js = MERMAID_JS_PATH.read_text(encoding="utf-8")
 
-    logo_uri = LOGO_PATH.as_uri() if LOGO_PATH.exists() else ""
+    logo_data_uri = get_logo_data_uri()
+    today_str = datetime.now().strftime("%B %d, %Y")
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -155,6 +168,9 @@ def generate_html(md_content: str, version: str) -> str:
     size: A4;
     margin: 18mm 14mm 18mm 14mm;
   }}
+  @page :first {{
+    margin: 0;
+  }}
   body {{
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     font-size: 10.5pt;
@@ -168,45 +184,79 @@ def generate_html(md_content: str, version: str) -> str:
   /* Cover Page */
   .cover-page {{
     page-break-after: always;
-    min-height: 90vh;
+    page-break-before: avoid;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 297mm;
+    height: 297mm;
+    max-height: 297mm;
+    overflow: hidden;
+    background-color: #0B0B12;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     text-align: center;
-    background: radial-gradient(circle at 50% 30%, #0f172a 0%, #070a13 100%);
-    color: #ffffff;
-    padding: 40px 20px;
-    border-radius: 8px;
-    margin-bottom: 30px;
+    padding: 55mm 20mm 25mm 20mm;
+    margin: 0;
+  }}
+  .cover-upper {{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
   }}
   .cover-logo {{
-    max-width: 440px;
-    height: auto;
+    width: 170px;
+    height: 170px;
     margin-bottom: 24px;
-    filter: drop-shadow(0 0 25px rgba(56, 189, 248, 0.45));
+    filter: drop-shadow(0 0 35px rgba(34, 211, 238, 0.4));
+    border-radius: 36px;
+    border: none !important;
+    box-shadow: none !important;
   }}
-  .cover-title {{
-    font-size: 32pt;
+  .cover-app-title {{
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 40pt;
     font-weight: 800;
-    letter-spacing: -0.5px;
-    color: #ffffff;
-    margin: 0 0 12px 0;
+    color: #FFFFFF;
+    letter-spacing: -1px;
+    margin: 0 0 6px 0;
   }}
   .cover-subtitle {{
-    font-size: 13pt;
-    color: #38bdf8;
-    max-width: 600px;
-    margin: 0 0 32px 0;
-    font-weight: 500;
-    line-height: 1.4;
+    font-size: 18pt;
+    font-weight: 600;
+    color: #22D3EE;
+    letter-spacing: 0.5px;
+    margin: 0 0 12px 0;
   }}
-  .cover-meta {{
+  .cover-tagline {{
+    font-size: 12.5pt;
+    color: #94A3B8;
+    font-style: italic;
+    margin: 0 0 24px 0;
+  }}
+  .cover-accent-line {{
+    width: 140px;
+    height: 4px;
+    background: linear-gradient(90deg, #22D3EE 0%, #E040FB 50%, #FF7A45 100%);
+    border-radius: 2px;
+  }}
+  .cover-footer {{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }}
+  .cover-version {{
+    font-size: 11pt;
+    font-weight: 700;
+    color: #F8FAFC;
+    margin-bottom: 4px;
+  }}
+  .cover-date {{
     font-size: 10pt;
-    color: #94a3b8;
-    border-top: 1px solid #334155;
-    padding-top: 16px;
-    width: 320px;
+    color: #64748B;
   }}
   .cover-meta p {{
     margin: 4px 0;
@@ -395,16 +445,16 @@ def generate_html(md_content: str, version: str) -> str:
 
 <!-- Cover Page -->
 <div class="cover-page">
-  {"<img class='cover-logo' src='" + logo_uri + "' alt='Lathe Logo' />" if logo_uri else ""}
-  <div class="cover-title">Lathe User Manual</div>
-  <div class="cover-subtitle">
-    Autonomous Terminal AI Coding Agent Powered by Dual Open-Source Models & Automated Merging
+  <div class="cover-upper">
+    <img class="cover-logo" src="{logo_data_uri}" alt="Lathe Logo" />
+    <h1 class="cover-app-title">Lathe</h1>
+    <div class="cover-subtitle">User Manual</div>
+    <div class="cover-tagline">Turn prompts into code. Locally.</div>
+    <div class="cover-accent-line"></div>
   </div>
-  <div class="cover-meta">
-    <p><strong>Version:</strong> v{version}</p>
-    <p><strong>Release Date:</strong> November 2026</p>
-    <p><strong>Author:</strong> Aditya Surse & Lathe Contributors</p>
-    <p><strong>License:</strong> Apache-2.0</p>
+  <div class="cover-footer">
+    <div class="cover-version">v{version}</div>
+    <div class="cover-date">{today_str}</div>
   </div>
 </div>
 
@@ -467,30 +517,28 @@ def build_manual() -> None:
 
     with sync_playwright() as p:
         browser = p.chromium.launch(
-            args=["--allow-file-access-from-files", "--disable-web-security"]
+            headless=True,
+            args=["--allow-file-access-from-files", "--disable-web-security"],
         )
         page = browser.new_page()
 
         # Navigate to HTML file
-        page.goto(OUTPUT_HTML.as_uri(), wait_until="networkidle")
-
-        # Allow mermaid to complete rendering if diagrams exist
-        try:
-            page.wait_for_selector(".mermaid svg", timeout=5000)
-            print("✓ Rendered Mermaid diagrams successfully.")
-        except Exception:
-            print("Notice: No mermaid SVG selector rendered or timeout reached.")
+        print("Loading HTML into page...", flush=True)
+        page.goto(OUTPUT_HTML.as_uri(), wait_until="load")
+        page.wait_for_timeout(1500)
+        print("Rendering PDF...", flush=True)
 
         # Print PDF with headers, footers, and page numbers
+        # prefer_css_page_size=True allows @page :first { margin: 0; } to suppress headers on page 1
         page.pdf(
             path=str(OUTPUT_PDF),
             format="A4",
             print_background=True,
-            margin={"top": "18mm", "bottom": "18mm", "left": "15mm", "right": "15mm"},
+            prefer_css_page_size=True,
             display_header_footer=True,
             header_template=(
                 '<div style="font-size: 8pt; font-family: -apple-system, sans-serif; '
-                'color: #94a3b8; width: 100%; text-align: right; padding-right: 15mm;">'
+                'color: #94a3b8; width: 100%; text-align: right; padding-right: 14mm;">'
                 f"Lathe User Manual · v{version}</div>"
             ),
             footer_template=(

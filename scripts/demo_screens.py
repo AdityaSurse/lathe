@@ -301,6 +301,82 @@ def render_bench_table(console: Console) -> None:
     console.print(render_benchmark_table(suite))
 
 
+def render_models_presets(console: Console) -> None:
+    from lathe.models.presets import list_presets
+
+    table = Table(
+        title="Lathe Model Presets",
+        title_style="bold cyan",
+        border_style="bright_blue",
+        show_header=True,
+        header_style="bold white",
+    )
+    table.add_column("Preset", style="bold green", no_wrap=True)
+    table.add_column("Display Name & Description")
+    table.add_column("Coder Model")
+    table.add_column("Router Model")
+    table.add_column("Status", no_wrap=True)
+
+    for p in list_presets():
+        desc = f"[bold]{p.display_name}[/bold]\n[dim]{p.description}[/dim]"
+        status_badge = (
+            "[bold green]Ready[/bold green] (3/3)"
+            if p.name == "gemma"
+            else "[yellow]Partial[/yellow] (1/3)"
+        )
+        table.add_row(
+            p.name,
+            desc,
+            p.coder.model,
+            p.router.model,
+            status_badge,
+        )
+    console.print(table)
+    console.print(
+        "\n[dim]To pull and configure a preset, run:[/dim] "
+        "[bold cyan]lathe models preset <name>[/bold cyan]\n"
+    )
+
+
+def render_gemma_session(console: Console) -> None:
+    banner = Panel(
+        "[bold cyan]Lathe[/bold cyan] [dim]v1.0.0[/dim] — Terminal AI Coding Agent\n"
+        "[dim]Active Preset:[/dim] [bold green]gemma[/bold green] (Google Gemma 4B/2B)\n"
+        "[dim]Coder:[/dim] [white]ollama:gemma4:e4b[/white]  "
+        "[dim]Router:[/dim] [white]ollama:gemma4:e2b[/white]  "
+        "[dim]Planner:[/dim] [white]ollama:gemma4:e4b[/white]\n"
+        "[dim]Mode:[/dim] [cyan]auto[/cyan] | "
+        "[dim]Context Window:[/dim] [cyan]32,768[/cyan] | "
+        "[dim]Permissions:[/dim] [yellow]interactive[/yellow]",
+        border_style="bright_blue",
+        title="[bold white]Local LLM Workspace[/bold white]",
+    )
+    console.print(banner)
+    console.print(
+        "\n[bold green]lathe>[/bold green] "
+        "[white]Add a healthcheck endpoint in src/api/health.py[/white]\n"
+    )
+    console.print("[dim]routed: simple → single mode (coder: gemma4:e4b)[/dim]\n")
+
+    panel = Panel(
+        "[bold cyan]Tool:[/bold cyan] write_file\n"
+        "[bold cyan]Path:[/bold cyan] src/api/health.py\n"
+        "[bold cyan]Content:[/bold cyan]\n"
+        "from fastapi import APIRouter\n\n"
+        "router = APIRouter()\n\n"
+        "@router.get('/health')\n"
+        "def health_check():\n"
+        "    return {'status': 'healthy', 'version': '1.0.0'}",
+        title="[bold yellow]Tool Call: write_file[/bold yellow]",
+        border_style="yellow",
+    )
+    console.print(panel)
+    console.print(
+        "\n[bold green]✓[/bold green] Created [bold]src/api/health.py[/bold] with FastAPI router."
+    )
+    console.print("[dim]Tokens: 1,420 in / 148 out (48.5 tok/s)[/dim]\n")
+
+
 SCREENS = {
     "doctor": render_doctor,
     "repl_banner": render_repl_banner,
@@ -314,6 +390,8 @@ SCREENS = {
     "map": render_map,
     "models_search": render_models_search,
     "bench_table": render_bench_table,
+    "models_presets": render_models_presets,
+    "gemma_session": render_gemma_session,
 }
 
 if __name__ == "__main__":

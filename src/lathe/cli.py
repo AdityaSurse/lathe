@@ -447,6 +447,11 @@ def config_init(
         "-p",
         help="Target file path to initialize.",
     ),
+    preset: str | None = typer.Option(
+        None,
+        "--preset",
+        help="Preset to preconfigure roles ('qwen', 'gemma', or 'mixed').",
+    ),
     force: bool = typer.Option(
         False,
         "--force",
@@ -462,8 +467,21 @@ def config_init(
         raise typer.Exit(code=1)
 
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(COMMENTED_TOML_TEMPLATE, encoding="utf-8")
-    console.print(f"[green]Initialized configuration file at '{path}'[/green]")
+    if preset:
+        from lathe.models.presets import generate_preset_toml, get_preset
+
+        try:
+            p_obj = get_preset(preset)
+            content = generate_preset_toml(p_obj)
+        except ValueError as exc:
+            console.print(f"[red]Error:[/red] {exc}")
+            raise typer.Exit(code=1) from exc
+    else:
+        content = COMMENTED_TOML_TEMPLATE
+
+    path.write_text(content, encoding="utf-8")
+    preset_note = f" with preset '{preset}'" if preset else ""
+    console.print(f"[green]Initialized configuration file at '{path}'{preset_note}[/green]")
 
 
 @config_app.command(name="show")
@@ -737,7 +755,32 @@ def merge_main(
 
     from lathe.merge.wizard import run_merge_wizard
 
-    run_merge_wizard(colab=colab, name=name, preset=preset, out_console=console)
+    use_preset = preset or (
+        bool(name)
+        and name.lower()
+        in ("qwen-1.5b", "qwen", "qwen2.5-1.5b", "start-small", "qwen2.5-1.5b-coder-instruct")
+    )
+    run_merge_wizard(colab=colab, name=name, preset=use_preset, out_console=console)
+
+
+@merge_app.command(name="qwen-1.5b")
+def merge_qwen_preset(
+    colab: bool = typer.Option(
+        False,
+        "--colab",
+        help="Generate a Google Colab notebook instead of running locally.",
+    ),
+    name: str = typer.Option(
+        "qwen2.5-1.5b-coder-instruct",
+        "--name",
+        "-n",
+        help="Output directory name for the merge in merges/.",
+    ),
+) -> None:
+    """Run the start-small preset merge (Qwen2.5 1.5B Coder + Instruct)."""
+    from lathe.merge.wizard import run_merge_wizard
+
+    run_merge_wizard(colab=colab, name=name, preset=True, out_console=console)
 
 
 @merge_app.command(name="push")
@@ -818,6 +861,15 @@ def bench_cmd(
         None,
         help="Optional model names or identifiers to benchmark (default: candidate models).",
     ),
+    preset: list[str] | None = typer.Option(
+        None,
+        "--preset",
+        "-p",
+        help=(
+            "Model preset names to benchmark (e.g. gemma, qwen, mixed). "
+            "Can be specified multiple times."
+        ),
+    ),
     limit: int | None = typer.Option(
         None,
         "--limit",
@@ -841,8 +893,21 @@ def bench_cmd(
     from lathe.bench.tasks import ALL_BENCH_TASKS
     from lathe.merge.models import START_SMALL_PRESET
 
-    target_models = list(models) if models else []
-    if not target_models:
+    if preset:
+        from lathe.models.presets import get_preset
+
+        target_models: list[str] = []
+        for p_name in preset:
+            try:
+                p_obj = get_preset(p_name)
+                if p_obj.coder.model not in target_models:
+                    target_models.append(p_obj.coder.model)
+            except ValueError as exc:
+                console.print(f"[red]Error:[/red] {exc}")
+                raise typer.Exit(code=1) from exc
+    elif models:
+        target_models = list(models)
+    else:
         target_models = [
             START_SMALL_PRESET.model_a,
             START_SMALL_PRESET.model_b,

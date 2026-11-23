@@ -9,6 +9,7 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![License Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue?style=for-the-badge&logo=apache&logoColor=white)](LICENSE)
 [![Ollama](https://img.shields.io/badge/local_runtime-Ollama-black?style=for-the-badge&logo=ollama&logoColor=white)](https://ollama.ai)
+[![Google Gemma](https://img.shields.io/badge/Google%20Gemma-e2b%20%7C%20e4b-blue?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/gemma)
 [![Hugging Face](https://img.shields.io/badge/providers-Hugging%20Face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=for-the-badge&logo=github)](CONTRIBUTING.md)
 
@@ -466,17 +467,31 @@ CLI interface for interactive coding, non-interactive CI automation, model mergi
 
 Interactive commands available during agent execution sessions.
 
-### Recommended Model Pairs by Hardware
+### Recommended Model Presets & Hardware Sizing
 
-| Hardware Tier | Router Model | Planner / Reviewer | Coder Model | Backend Mode |
-|:---|:---|:---|:---|:---|
-| **CPU Only (16GB RAM)** | `Qwen2.5-Coder-1.5B (Q4)` | `Qwen2.5-Coder-7B (Q4)` | `Qwen2.5-Coder-7B (Q4)` | Ollama Local |
-| **6–8GB GPU (RTX 3060/4060)** | `Qwen2.5-Coder-1.5B (Q4)` | `DeepSeek-R1-Distill-7B (Q4)` | `Qwen2.5-Coder-7B (Q4)` | Ollama Local |
-| **16GB+ GPU / Apple Silicon** | `Qwen2.5-Coder-7B (Q4)` | `DeepSeek-R1-Distill-14B (Q4)` | `Qwen2.5-Coder-14B (Q4)` | Ollama Local |
-| **API Only / Hybrid** | Fast Local 1.5B or API | `DeepSeek-R1 (API)` | `Qwen2.5-Coder-32B-Instruct` | HF Inference Providers |
-| **Lathe Merged** | Fast Local 1.5B | `Lathe-Qwen-1.5B-Merged` | `Lathe-Qwen-1.5B-Merged` | Ollama Local (Merged) |
+Lathe includes curated out-of-the-box presets for local open-source models:
 
-Hardware-adapted configurations optimizing memory footprint, latency, and code accuracy.
+| Preset Name | Coder Model | Router Model | Planner Model | Memory Footprint | Recommended Hardware |
+|:---|:---|:---|:---|:---|:---|
+| **`qwen`** *(Default)* | `Qwen2.5-Coder-7B (Q4)` | `Qwen2.5-Coder-1.5B (Q4)` | `DeepSeek-R1-Distill-7B (Q4)` | **~6.0 GB RAM** | 16GB+ Apple Silicon / RTX 3060+ |
+| **`gemma`** *(Google)* | `gemma4:e4b (4B Q4)` | `gemma4:e2b (2B Q4)` | `gemma4:e4b (4B Q4)` | **~6.8 GB RAM** | 16GB+ Laptops & Workstations |
+| **`mixed`** *(Hybrid)* | `Qwen2.5-Coder-7B (Q4)` | `gemma4:e2b (2B Q4)` | `DeepSeek-R1-Distill-7B (Q4)` | **~6.2 GB RAM** | 16GB+ RAM (Speed + Reasoning) |
+
+---
+
+### Using Google Gemma
+
+Switch your active environment to Google Gemma in one command:
+
+```bash
+lathe models preset gemma
+lathe
+# or test with mini-bench: lathe bench --preset gemma --preset qwen
+```
+
+To switch back to Qwen at any time: `lathe models preset qwen`. Inspect all presets with `lathe models presets`.
+
+---
 
 ### Project Folder Layout
 
@@ -593,7 +608,7 @@ lathe doctor
 </div>
 
 ### 2. Launch an interactive session
-Change directory to your project repository and open Lathe:
+Change directory to your project repository and open Lathe (or select your preferred model preset beforehand with `lathe models preset gemma` or `lathe models preset qwen`):
 ```bash
 cd my-project
 lathe
