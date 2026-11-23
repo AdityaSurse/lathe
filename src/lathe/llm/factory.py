@@ -83,3 +83,6 @@ def get_client(
         )
 
     raise ValueError(f"Unsupported backend '{role_config.backend}'.")
+
+
+get_client_for_config = get_client

@@ -49,7 +49,7 @@ def generate_colab_notebook(
             "outputs": [],
             "source": [
                 "# 2. Authenticate with Hugging Face\n",
-                "from huggingface_hub import login\n",
+                "from huggingface_hub import login\n\n",
                 "login()\n",
             ],
         },
@@ -86,7 +86,7 @@ def generate_colab_notebook(
                 "# 5. Upload merged model weights and tokenizer to Hugging Face\n",
                 "from huggingface_hub import HfApi\n\n",
                 "api = HfApi()\n",
-                'prompt_msg = f"Enter destination HF repo id (e.g. username/{name}): "\n',
+                f'prompt_msg = "Enter destination HF repo id (e.g. username/{name}): "\\n',
                 "repo_id = input(prompt_msg).strip()\n",
                 "if repo_id:\n",
                 "    api.create_repo(repo_id=repo_id, exist_ok=True, private=True)\n",
