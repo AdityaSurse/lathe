@@ -63,6 +63,32 @@ class DefaultTaskGroup(TyperGroup):
         return super().parse_args(ctx, args_list)
 
 
+class MergeGroup(TyperGroup):
+    """Custom TyperGroup routing non-subcommand positional arguments as the merge name."""
+
+    def parse_args(self, ctx: ClickContext, args: list[str]) -> list[str]:
+        """Route unrecognized positional arguments to --name option for the merge wizard."""
+        args_list = list(args)
+        pos_idx = -1
+        i = 0
+        while i < len(args_list):
+            a = args_list[i]
+            if a in ("--name", "-n"):
+                i += 2
+            elif a.startswith("-"):
+                i += 1
+            else:
+                pos_idx = i
+                break
+
+        if pos_idx != -1:
+            cmd_name = args_list[pos_idx]
+            if self.get_command(ctx, cmd_name) is None:
+                name_arg = args_list.pop(pos_idx)
+                args_list.extend(["--name", name_arg])
+        return super().parse_args(ctx, args_list)
+
+
 app = typer.Typer(
     cls=DefaultTaskGroup,
     name="lathe",
@@ -74,6 +100,7 @@ config_app = typer.Typer(
     no_args_is_help=True,
 )
 merge_app = typer.Typer(
+    cls=MergeGroup,
     name="merge",
     help="Model merging with mergekit.",
     no_args_is_help=False,
@@ -723,6 +750,91 @@ def merge_push(
         )
     except Exception as exc:
         console.print(f"[red]Push failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+
+@merge_app.command(name="gguf")
+def merge_gguf(
+    name: str = typer.Argument(
+        ...,
+        help="Name of the merge directory in merges/ to convert and quantize.",
+    ),
+    quant: str = typer.Option(
+        "Q4_K_M",
+        "--quant",
+        "-q",
+        help="Target quantization format (e.g. Q4_K_M, Q5_K_M, Q8_0).",
+    ),
+    no_probe: bool = typer.Option(
+        False,
+        "--no-probe",
+        help="Skip automatic model capability probing after Ollama creation.",
+    ),
+) -> None:
+    """Convert merged safetensors to GGUF, quantize, create Ollama model, and probe."""
+    from lathe.merge.gguf import convert_and_deploy_gguf
+
+    try:
+        convert_and_deploy_gguf(
+            name=name,
+            quant=quant,
+            auto_probe=not no_probe,
+            out_console=console,
+        )
+    except Exception as exc:
+        console.print(f"[red]GGUF conversion/deployment failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+
+@app.command(name="bench")
+def bench_cmd(
+    models: list[str] = typer.Argument(
+        None,
+        help="Optional model names or identifiers to benchmark (default: candidate models).",
+    ),
+    limit: int | None = typer.Option(
+        None,
+        "--limit",
+        "-l",
+        help="Limit number of benchmark tasks to run.",
+    ),
+    output_dir: str | None = typer.Option(
+        None,
+        "--output-dir",
+        "-o",
+        help="Custom directory to save benchmark results JSON.",
+    ),
+) -> None:
+    """Run the Lathe mini-bench evaluation suite across models."""
+    from lathe.bench.report import (
+        generate_benchmark_chart,
+        render_benchmark_table,
+        save_benchmark_json,
+    )
+    from lathe.bench.runner import run_benchmark_suite
+    from lathe.bench.tasks import ALL_BENCH_TASKS
+    from lathe.merge.models import START_SMALL_PRESET
+
+    target_models = list(models) if models else []
+    if not target_models:
+        target_models = [
+            START_SMALL_PRESET.model_a,
+            START_SMALL_PRESET.model_b,
+            f"lathe-{START_SMALL_PRESET.name}",
+        ]
+
+    tasks = ALL_BENCH_TASKS[:limit] if limit is not None else ALL_BENCH_TASKS
+
+    try:
+        suite_res = run_benchmark_suite(models=target_models, tasks=tasks, out_console=console)
+        console.print()
+        console.print(render_benchmark_table(suite_res))
+        json_path = save_benchmark_json(suite_res, output_dir=output_dir)
+        console.print(f"\n[bold green]✓ Benchmark metrics saved to:[/bold green] {json_path}")
+        chart_path = generate_benchmark_chart(suite_res)
+        console.print(f"[bold green]✓ Benchmark chart saved to:[/bold green] {chart_path}\n")
+    except Exception as exc:
+        console.print(f"[red]Benchmark execution failed:[/red] {exc}")
         raise typer.Exit(code=1) from exc
 
 

@@ -24,6 +24,7 @@ ALIAS_ROOT_FILES = {
     "test_review.py",
     "test_router.py",
     "test_merge.py",
+    "test_bench.py",
 }
 
 

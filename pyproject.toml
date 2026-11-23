@@ -58,6 +58,7 @@ packages = ["src/lathe"]
 target-version = "py311"
 line-length = 100
 src = ["src", "tests"]
+exclude = ["merges"]
 
 [tool.ruff.lint]
 select = [

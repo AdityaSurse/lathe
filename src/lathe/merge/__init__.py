@@ -15,6 +15,13 @@ from lathe.merge.generator import (
     generate_ties_yaml,
     write_merge_config,
 )
+from lathe.merge.gguf import (
+    convert_and_deploy_gguf,
+    create_ollama_model,
+    ensure_llama_cpp,
+    extract_chat_template,
+    generate_modelfile,
+)
 from lathe.merge.hub import push_to_hub
 from lathe.merge.models import (
     START_SMALL_PRESET,
@@ -50,8 +57,12 @@ __all__ = [
     "ModelArchitectureInfo",
     "ResourceEstimate",
     "check_compatibility",
+    "convert_and_deploy_gguf",
+    "create_ollama_model",
+    "ensure_llama_cpp",
     "estimate_merge_resources",
     "estimate_transformer_parameters",
+    "extract_chat_template",
     "fetch_model_info",
     "format_bytes",
     "format_params",
@@ -59,6 +70,7 @@ __all__ = [
     "generate_linear_yaml",
     "generate_merge_yaml",
     "generate_model_card",
+    "generate_modelfile",
     "generate_slerp_yaml",
     "generate_ties_yaml",
     "is_mergekit_installed",

@@ -43,9 +43,10 @@ Model combination pipeline integrating `mergekit` (optional extra: `lathe-agent[
 5. Local execution & Model Cards: executes `mergekit-yaml` using lazy loading and low-memory flags (`--lazy-unpickle`, `--allow-crimes`, `--low-cpu-memory`, `--copy-tokenizer`), streaming real-time output, and auto-generates a comprehensive model card (`merges/<name>/README.md`) with YAML frontmatter, source model links, and GGUF deployment instructions.
 6. Cloud execution: `lathe merge --colab` generates self-contained, GPU-accelerated Google Colab Jupyter notebooks (`.ipynb`) that install mergekit, execute the YAML configuration, and upload the merged weights directly to Hugging Face.
 7. Hub publishing: `lathe merge push <name>` uploads merged directories to the Hugging Face Hub via `huggingface_hub.HfApi` with interactive confirmation and default private repository visibility.
+8. GGUF quantization & local deployment: `lathe merge gguf <name> [--quant Q4_K_M]` converts merged safetensors into GGUF format via `llama.cpp` (`convert_hf_to_gguf.py`, cloned into `~/.cache/lathe/llama.cpp` pinned to a release tag), quantizes using `llama-quantize`, constructs an Ollama Modelfile preserving extracted Jinja chat templates from parent tokenizer configs, executes `ollama create lathe-<name>`, and automatically executes `lathe models probe` to calibrate tool-calling protocols.
 
 ### `lathe.bench`
-Local evaluation harness assessing candidate model pairs on syntax accuracy, refactoring correctness, and unit test pass rates.
+Local evaluation harness assessing candidate model pairs on syntax accuracy, refactoring correctness, throughput, and unit test pass rates. Built around the 30-task Lathe mini-bench suite (`src/lathe/bench/tasks/`) spanning Python algorithms, C systems code, and structured tool-calling validations. The evaluation engine benchmarks candidate models in isolated subshells, calculating pass@1 accuracy, generation throughput (tokens/sec), completion latency, and tool-call format success. It displays comparative Rich inspection tables, serializes structured JSON telemetry to `bench/results/<timestamp>.json`, and outputs multi-metric comparative bar chart visualizations to `assets/bench.png`. All results are explicitly documented as illustrative evaluations under the Lathe mini-bench specification.
 
 ---
 

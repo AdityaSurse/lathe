@@ -81,17 +81,17 @@ class TokenCounter:
             return None
 
         # Check local disk cache
-        local_dir = self.cache_dir / repo_id.replace("/", "__")
-        local_file = local_dir / "tokenizer.json"
-        if local_file.is_file():
-            try:
+        try:
+            local_dir = self.cache_dir / repo_id.replace("/", "__")
+            local_file = local_dir / "tokenizer.json"
+            if local_file.is_file():
                 from tokenizers import Tokenizer
 
                 tok = Tokenizer.from_file(str(local_file))
                 _TOKENIZER_CACHE[repo_id] = tok
                 return tok
-            except Exception:
-                pass
+        except (OSError, Exception):
+            pass
 
         # Attempt to load using tokenizers.Tokenizer.from_pretrained
         try:

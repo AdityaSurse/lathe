@@ -62,3 +62,24 @@ def test_merge_push_cli(tmp_path: Path, monkeypatch):
     result = runner.invoke(app, ["merge", "push", "my-model", "--yes"])
     assert result.exit_code == 0
     mock_push.assert_called_once()
+
+
+def test_merge_positional_name_argument(tmp_path: Path, monkeypatch):
+    """Positional name argument (e.g. lathe merge qwen-1.5b --colab) routes properly."""
+    monkeypatch.chdir(tmp_path)
+
+    fake_info = ModelArchitectureInfo(
+        repo_id="Qwen/Qwen2.5-Coder-1.5B",
+        model_type="qwen2",
+        hidden_size=1536,
+        num_hidden_layers=28,
+        vocab_size=151936,
+        tokenizer_class="Qwen2TokenizerFast",
+        estimated_params=1_540_000_000,
+    )
+    monkeypatch.setattr("lathe.merge.wizard.fetch_model_info", lambda _: fake_info)
+
+    result = runner.invoke(app, ["merge", "qwen-1.5b", "--colab", "--preset"])
+    assert result.exit_code == 0
+    colab_file = tmp_path / "merges" / "qwen-1.5b" / "merge_qwen-1.5b.ipynb"
+    assert colab_file.exists()
