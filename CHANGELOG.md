@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.1.0] - 2026-11-23
+## [1.0.0] - 2026-11-23
 
 Initial public release of Lathe — an autonomous terminal AI coding agent powered by dual-model orchestration, local GGUF runtimes, and automated model merging.
 

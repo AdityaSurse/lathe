@@ -34,7 +34,7 @@ ENV/
 
 # Lathe specific & LLM weights
 .lathe/
-models/
+/models/
 *.gguf
 *.safetensors
 *.bin

@@ -5,6 +5,10 @@ site_url: https://adityasurse.github.io/lathe/
 repo_url: https://github.com/adityasurse/lathe
 repo_name: adityasurse/lathe
 
+exclude_docs: |
+  manual/*
+  manual/**/*
+
 theme:
   name: material
   palette:

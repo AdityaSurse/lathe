@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "lathe-agent"
-version = "0.1.0"
+version = "1.0.0"
 description = "Terminal AI coding agent powered by dual open-source models and automated merging."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -68,6 +68,7 @@ dev = [
     "pytest-cov>=5.0.0",
     "ruff>=0.4.0",
     "mypy>=1.9.0",
+    "playwright>=1.40.0",
 ]
 merge = [
     "mergekit>=0.0.4",
@@ -89,6 +90,9 @@ dev = [
     "pytest-cov>=5.0.0",
     "ruff>=0.4.0",
     "mypy>=1.9.0",
+    "playwright>=1.40.0",
+    "mkdocs>=1.6.0",
+    "mkdocs-material>=9.5.0",
 ]
 docs = [
     "mkdocs>=1.6.0",
