@@ -73,8 +73,14 @@ config_app = typer.Typer(
     help="Inspect and manage Lathe configuration files.",
     no_args_is_help=True,
 )
+merge_app = typer.Typer(
+    name="merge",
+    help="Model merging with mergekit.",
+    no_args_is_help=False,
+)
 app.add_typer(config_app, name="config")
 app.add_typer(models_app, name="models")
+app.add_typer(merge_app, name="merge")
 
 console = Console()
 
@@ -650,6 +656,74 @@ def tool_alias(
 ) -> None:
     """Alias for 'lathe tools'."""
     tools_cmd(name)
+
+
+@merge_app.callback(invoke_without_command=True)
+def merge_main(
+    ctx: typer.Context,
+    colab: bool = typer.Option(
+        False,
+        "--colab",
+        help="Generate a Google Colab notebook instead of running locally.",
+    ),
+    name: str | None = typer.Option(
+        None,
+        "--name",
+        "-n",
+        help="Output directory name for the merge in merges/.",
+    ),
+    preset: bool = typer.Option(
+        False,
+        "--preset",
+        help="Use the start-small preset (Qwen2.5 1.5B Coder + Instruct).",
+    ),
+) -> None:
+    """Run the interactive model merge wizard, or manage merged models."""
+    if ctx.invoked_subcommand is not None:
+        return
+
+    from lathe.merge.wizard import run_merge_wizard
+
+    run_merge_wizard(colab=colab, name=name, preset=preset, out_console=console)
+
+
+@merge_app.command(name="push")
+def merge_push(
+    name: str = typer.Argument(
+        ...,
+        help="Name of the merge directory in merges/ to push to Hugging Face.",
+    ),
+    repo_id: str | None = typer.Option(
+        None,
+        "--repo-id",
+        help="Destination Hugging Face repository ID (e.g. username/merged-model).",
+    ),
+    private: bool = typer.Option(
+        True,
+        "--private/--public",
+        help="Whether to make the Hugging Face repository private (default: private).",
+    ),
+    yes: bool = typer.Option(
+        False,
+        "-y",
+        "--yes",
+        help="Skip confirmation prompt before uploading.",
+    ),
+) -> None:
+    """Upload a merged model from merges/<name> to the Hugging Face Hub."""
+    from lathe.merge.hub import push_to_hub
+
+    try:
+        push_to_hub(
+            name=name,
+            repo_id=repo_id,
+            private=private,
+            interactive=not yes,
+            out_console=console,
+        )
+    except Exception as exc:
+        console.print(f"[red]Push failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
 
 
 if __name__ == "__main__":

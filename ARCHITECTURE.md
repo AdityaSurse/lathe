@@ -35,7 +35,14 @@ Short-term and compressed long-term memory engine. It maintains active execution
 Terminal presentation layer implemented with prompt_toolkit and Rich. It powers the interactive REPL with persistent history, Alt+Enter multiline editing, @file repository path autocompletion, dynamic bottom status bar toolbar (repository, git branch, mode, active role models, session tokens), slash command framework (/help, /model, /mode, /clear, /tokens, /compact, /exit, /undo, /checkpoints, /restore, /diff), unified theme palette (matching the README), and live streaming Markdown responses with syntax-highlighted code blocks and Ctrl+C generation cancellation.
 
 ### `lathe.merge`
-Model combination pipeline integrating `mergekit`. It builds SLERP and TIES interpolation configurations, converts safetensors via `llama.cpp`, quantizes models to Q4_K_M GGUF format, and generates Ollama Modelfiles.
+Model combination pipeline integrating `mergekit` (optional extra: `lathe-agent[merge]`). It provides the `lathe merge` interactive wizard:
+1. Model selection: supports tested presets (e.g. `Qwen/Qwen2.5-Coder-1.5B` + `Qwen/Qwen2.5-1.5B-Instruct` for laptops) or custom Hugging Face safetensors repositories (safetensors required; GGUF repositories strictly rejected).
+2. Architecture compatibility checking: fetches remote `config.json` and `tokenizer_config.json` via `huggingface_hub` without downloading full model weights, comparing `model_type`, `hidden_size`, `num_hidden_layers`, `vocab_size`, and tokenizer specifications; renders structured Rich comparison tables and refuses incompatible model pairs.
+3. Merge methods & YAML generation: generates validated mergekit YAML configurations saved into `merges/<name>/config.yaml` supporting SLERP (with parameter $t$ and optional layer-wise gradient for `self_attn` vs `mlp`), TIES and DARE-TIES (with designated base model, density, and weight coefficients), and Linear averaging.
+4. Resource estimation: calculates parameter counts, computes FP16 memory requirements (`params * 2` bytes per model), checks available system RAM and disk capacity, and emits clear warnings when hardware limits are constrained.
+5. Local execution & Model Cards: executes `mergekit-yaml` using lazy loading and low-memory flags (`--lazy-unpickle`, `--allow-crimes`, `--low-cpu-memory`, `--copy-tokenizer`), streaming real-time output, and auto-generates a comprehensive model card (`merges/<name>/README.md`) with YAML frontmatter, source model links, and GGUF deployment instructions.
+6. Cloud execution: `lathe merge --colab` generates self-contained, GPU-accelerated Google Colab Jupyter notebooks (`.ipynb`) that install mergekit, execute the YAML configuration, and upload the merged weights directly to Hugging Face.
+7. Hub publishing: `lathe merge push <name>` uploads merged directories to the Hugging Face Hub via `huggingface_hub.HfApi` with interactive confirmation and default private repository visibility.
 
 ### `lathe.bench`
 Local evaluation harness assessing candidate model pairs on syntax accuracy, refactoring correctness, and unit test pass rates.
