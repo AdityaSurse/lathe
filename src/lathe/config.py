@@ -125,6 +125,27 @@ class EmbeddingsConfig(BaseModel):
     base_url: str | None = None
 
 
+class McpServerConfig(BaseModel):
+    """Configuration for an individual Model Context Protocol (MCP) server."""
+
+    command: str = Field(description="Command or executable binary to launch server.")
+    args: list[str] = Field(
+        default_factory=list,
+        description="Command-line arguments passed to server command.",
+    )
+    env: dict[str, str] = Field(
+        default_factory=dict,
+        description="Environment variables provided to server process.",
+    )
+
+
+class McpConfig(BaseModel):
+    """Configuration for Model Context Protocol (MCP) servers."""
+
+    enabled: bool = False
+    servers: dict[str, McpServerConfig] = Field(default_factory=dict)
+
+
 class LatheConfig(BaseModel):
     """Root configuration object merging settings and multi-model roles."""
 
@@ -132,6 +153,7 @@ class LatheConfig(BaseModel):
     roles: RolesConfig = Field(default_factory=RolesConfig)
     embeddings: EmbeddingsConfig = Field(default_factory=EmbeddingsConfig)
     project: ProjectConfig = Field(default_factory=ProjectConfig)
+    mcp: McpConfig = Field(default_factory=McpConfig)
 
     def get_reviewer(self) -> RoleConfig:
         """Shortcut to get the reviewer configuration."""

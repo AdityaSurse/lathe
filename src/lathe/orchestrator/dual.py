@@ -276,12 +276,25 @@ class DualAgent:
         repo_map = self._get_repo_map(task)
         search_results = gather_search_results(self.workspace_root, task)
 
-        user_content = (
-            f"# Task\n{task}\n\n"
-            f"# Repository Map\n{repo_map}\n\n"
-            f"# Search Results\n{search_results}\n\n"
-            "Produce the execution plan JSON matching the required schema."
+        instructions = ""
+        try:
+            from lathe.memory.instructions import load_project_instructions
+
+            instructions = load_project_instructions(self.workspace_root)
+        except Exception:
+            pass
+
+        prompt_sections = [f"# Task\n{task}"]
+        if instructions:
+            prompt_sections.append(instructions)
+        prompt_sections.extend(
+            [
+                f"# Repository Map\n{repo_map}",
+                f"# Search Results\n{search_results}",
+                "Produce the execution plan JSON matching the required schema.",
+            ]
         )
+        user_content = "\n\n".join(prompt_sections)
 
         messages = [
             Message(role="system", content=PLANNER_SYSTEM_PROMPT),
