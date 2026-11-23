@@ -2,12 +2,15 @@
 
 <img src="assets/banner.svg" alt="Lathe — Turn prompts into code. Locally." width="100%" />
 
+[![PyPI Version](https://img.shields.io/pypi/v/lathe-agent?style=for-the-badge&logo=pypi&logoColor=white)](https://pypi.org/project/lathe-agent/)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/lathe-agent?style=for-the-badge&logo=pypi&logoColor=white)](https://pypi.org/project/lathe-agent/)
+[![CI](https://img.shields.io/github/actions/workflow/status/adityasurse/lathe/ci.yml?branch=main&style=for-the-badge&logo=github-actions&logoColor=white)](https://github.com/adityasurse/lathe/actions)
+[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue?style=for-the-badge&logo=material-for-mkdocs&logoColor=white)](https://adityasurse.github.io/lathe/)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![License Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue?style=for-the-badge&logo=apache&logoColor=white)](LICENSE)
 [![Ollama](https://img.shields.io/badge/local_runtime-Ollama-black?style=for-the-badge&logo=ollama&logoColor=white)](https://ollama.ai)
 [![Hugging Face](https://img.shields.io/badge/providers-Hugging%20Face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=for-the-badge&logo=github)](CONTRIBUTING.md)
-[![Status](https://img.shields.io/badge/status-building%20in%20public-orange?style=for-the-badge)](https://github.com)
 
 </div>
 
@@ -18,7 +21,7 @@ Autonomous terminal coding agent combining open-source local LLMs, dual-model or
 ## Terminal Interface
 
 <div align="center">
-  <img src="assets/demo.svg" alt="Lathe Terminal Demo" width="100%" />
+  <img src="assets/demo.gif" alt="Lathe Terminal Demo" width="100%" />
 </div>
 
 Interactive terminal interface with automated planning, structured diff generation, AST review, and permission prompts.
@@ -410,19 +413,33 @@ Isolated phase branches merging sequentially into main with end-to-end integrati
 
 ---
 
+## Lathe Mini-Bench Results
+
+<div align="center">
+  <img src="assets/bench.png" alt="Lathe mini-bench: Pass@1 & Token Throughput" width="100%" />
+</div>
+
+*Evaluated across 30 coding challenges (Python algorithms, C memory systems, and tool-call schema formatting). Results labeled under the Lathe mini-bench illustrative evaluation specification.*
+
+---
+
 ## Reference Tables & Structure
 
 ### CLI Commands
 
 | Command | Purpose | Key Options |
 |:---|:---|:---|
-| `lathe` | Start interactive agent terminal session | `--model`, `--planner`, `--router` |
-| `lathe "<prompt>"` | Run single prompt autonomously to completion | `--auto-approve`, `--max-steps 10` |
-| `lathe --plan-only` | Analyze repository and print execution plan | `--output-plan plan.json` |
-| `lathe merge` | Merge two Hugging Face models using mergekit | `--method slerp`, `--quant q4_k_m` |
-| `lathe bench` | Evaluate model pair on local coding challenges | `--suite syntax,refactor,tests` |
-| `lathe models` | List available local Ollama and Hugging Face models | `--download`, `--provider hf` |
-| `lathe doctor` | Validate Ollama, llama.cpp, git, and HF tokens | `--fix` |
+| `lathe` | Start interactive agent terminal session | `--dual`, `--auto`, `--yolo` |
+| `lathe "<task>"` | Run single prompt autonomously to completion | `--dual`, `--auto`, `--yolo`, `--max-steps 25` |
+| `lathe doctor` | Validate Ollama runtime, git, tools, and HF tokens | |
+| `lathe config [init\|show]` | Initialize or inspect `lathe.toml` configuration | `--path lathe.toml`, `--force` |
+| `lathe models [list\|probe]` | Inspect local models and calibrate tool-calling protocol | `lathe models probe <model>` |
+| `lathe merge [name]` | Interactive model merge wizard using mergekit | `--preset`, `--colab`, `--name <name>` |
+| `lathe merge gguf <name>` | Convert safetensors to GGUF, quantize, and register in Ollama | `--quant Q4_K_M` |
+| `lathe merge push <name>` | Upload merged model directory to Hugging Face Hub | `--repo-id <user/repo>` |
+| `lathe bench [models...]` | Evaluate model candidates on Lathe mini-bench suite | `--tasks-dir`, `--output-json` |
+| `lathe index` | Build or refresh AST symbol and vector code index | `--rebuild`, `--stats` |
+| `lathe undo` | Revert workspace to previous checkpoint snapshot | |
 
 CLI interface for interactive coding, non-interactive CI automation, model merging, and diagnostics.
 
@@ -430,13 +447,19 @@ CLI interface for interactive coding, non-interactive CI automation, model mergi
 
 | Command | Action | Example |
 |:---|:---|:---|
-| `/help` | Display interactive command and tool reference | `/help tools` |
-| `/plan` | Show current multi-step execution checklist | `/plan` |
-| `/diff` | Inspect active pending diff before file write | `/diff auth/middleware.py` |
-| `/run` | Execute shell or test command manually | `/run pytest -v` |
-| `/compact` | Compact conversation history preserving AST context | `/compact` |
-| `/model` | Switch active Planner, Coder, or Router model | `/model coder qwen2.5-coder:7b` |
-| `/clear` | Clear terminal screen and temporary scratchpad | `/clear` |
+| `/help` | Display interactive command and tool reference | `/help` |
+| `/mode [single\|dual\|auto]` | Switch orchestrator execution mode | `/mode dual` |
+| `/model [role] [model]` | Switch model assigned to coder, planner, reviewer, or router | `/model coder qwen2.5-coder:7b` |
+| `/tokens` | Display colored breakdown chart of context budget | `/tokens` |
+| `/compact` | Force compaction of older conversation turns | `/compact` |
+| `/diff` | Inspect working tree unified diff since session start | `/diff` |
+| `/checkpoints` | List checkpoint snapshot history | `/checkpoints` |
+| `/undo` | Roll back recent agent edits to previous checkpoint | `/undo` |
+| `/restore <n>` | Restore workspace to specific checkpoint number | `/restore 2` |
+| `/remember <fact>` | Append convention or fact to `LATHE.md` | `/remember Always use ruff for linting` |
+| `/init` | Explore repository and draft baseline `LATHE.md` | `/init` |
+| `/stats` | View telemetry inspection table (latency, tokens/sec) | `/stats` |
+| `/clear` | Clear terminal screen and temporary history | `/clear` |
 | `/exit` | Gracefully terminate session and save progress | `/exit` |
 
 Interactive commands available during agent execution sessions.
@@ -449,7 +472,7 @@ Interactive commands available during agent execution sessions.
 | **6–8GB GPU (RTX 3060/4060)** | `Qwen2.5-Coder-1.5B (Q4)` | `DeepSeek-R1-Distill-7B (Q4)` | `Qwen2.5-Coder-7B (Q4)` | Ollama Local |
 | **16GB+ GPU / Apple Silicon** | `Qwen2.5-Coder-7B (Q4)` | `DeepSeek-R1-Distill-14B (Q4)` | `Qwen2.5-Coder-14B (Q4)` | Ollama Local |
 | **API Only / Hybrid** | Fast Local 1.5B or API | `DeepSeek-R1 (API)` | `Qwen2.5-Coder-32B-Instruct` | HF Inference Providers |
-| **Lathe Merged** | Fast Local 1.5B | `lathe-hybrid-7b (SLERP)` | `lathe-hybrid-7b (SLERP)` | Ollama Local (Merged) |
+| **Lathe Merged** | Fast Local 1.5B | `Lathe-Qwen-1.5B-Merged` | `Lathe-Qwen-1.5B-Merged` | Ollama Local (Merged) |
 
 Hardware-adapted configurations optimizing memory footprint, latency, and code accuracy.
 
@@ -457,65 +480,82 @@ Hardware-adapted configurations optimizing memory footprint, latency, and code a
 
 ```text
 lathe/
-├── assets/                  # High-resolution architectural and terminal SVGs
+├── assets/                  # High-resolution architectural diagrams, GIFs, and charts
 │   ├── banner.svg           # Project hero banner
-│   ├── demo.svg             # Terminal workflow preview
+│   ├── demo.gif             # Live terminal workflow recording (VHS)
+│   ├── bench.png            # Lathe mini-bench comparative metrics chart
 │   ├── merge.svg            # SLERP weight interpolation schematic
 │   └── transformer.svg      # Decoder-only transformer block diagram
-├── lathe/                   # Core Python application package
-│   ├── __init__.py          # Package entrypoint
-│   ├── cli.py               # CLI parser and argument handler
-│   ├── config.py            # Environment and config loader
-│   ├── brain/               # Multi-model orchestrator
-│   │   ├── planner.py       # Step decomposition and diff reviewer
-│   │   ├── coder.py         # Code and patch generator
-│   │   └── router.py        # Task complexity classifier
-│   ├── engine/              # Autonomous execution loop
-│   │   ├── loop.py          # State machine and retry engine
-│   │   ├── memory.py        # Context budgeting and compaction
-│   │   └── safety.py        # Permission gate and command filter
-│   ├── providers/           # LLM API and local runtime connectors
-│   │   ├── ollama.py        # Ollama local inference driver
-│   │   └── huggingface.py   # Hugging Face Inference Providers API
-│   ├── merge/               # Model merging and quantization
-│   │   ├── mergekit.py      # SLERP / TIES config generator
-│   │   ├── quantize.py      # llama.cpp GGUF converter
-│   │   └── bench.py         # Verification and benchmark runner
-│   ├── tools/               # Agent workspace capabilities
-│   │   ├── files.py         # File read and write operations
-│   │   ├── diff.py          # Unified diff parser and patcher
-│   │   ├── shell.py         # Sandboxed process execution
-│   │   ├── git.py           # Git status, checkout, and commit
-│   │   ├── search.py        # AST indexer and symbol lookup
-│   │   └── tests.py         # Pytest discovery and runner
-│   └── ui/                  # Rich terminal user interface
-│       ├── terminal.py      # Streaming renderer and color theme
-│       └── prompt.py        # Interactive input and confirmation prompts
-├── tests/                   # Automated pytest suite
-├── .gitignore               # Ignored cache, models, and virtualenvs
-├── LICENSE                  # Apache 2.0 license declaration
+├── docs/                    # Complete MkDocs documentation site
+├── src/lathe/               # Core Python application package
+│   ├── cli.py               # Typer CLI entrypoint and command router
+│   ├── config.py            # TOML settings and role configuration
+│   ├── orchestrator/        # Single-agent, dual-agent, reviewer, and task router
+│   ├── tools/               # Sandboxed file, edit, shell, search, git, and test tools
+│   ├── context/             # RepoMap AST parser, code index, and token budgeter
+│   ├── safety/              # PermissionEngine, hard blocklist, and CheckpointManager
+│   ├── memory/              # LATHE.md instructions, session state, and MCP client
+│   ├── merge/               # mergekit wizard, GGUF converter, and Hugging Face publisher
+│   ├── bench/               # Lathe mini-bench tasks and comparative report generator
+│   └── ui/                  # prompt_toolkit REPL, Rich streaming, and commands
+├── tests/                   # Comprehensive pytest test suite (80%+ coverage)
+├── .github/                 # Workflows (ci.yml, docs.yml, release.yml), templates
+├── install.sh               # Quick installer for Linux and macOS
+├── install.ps1              # Quick installer for Windows PowerShell
+├── demo.tape                # Charmbracelet VHS recording script
+├── pyproject.toml           # Project metadata, dependencies, and build configuration
+├── SECURITY.md              # Security policy, threat model, and vulnerability reporting
+├── CONTRIBUTING.md          # Contribution guidelines and development workflow
+├── CODE_OF_CONDUCT.md       # Contributor Covenant v2.1
+├── CHANGELOG.md             # Keep a Changelog phase-by-phase history
 └── README.md                # Project documentation and visual architecture
 ```
 Codebase hierarchy separating multi-model intelligence, provider drivers, and sandboxed tooling.
 
 ---
 
-## Quickstart
+## Installation & Quickstart
+
+### 1. Install Lathe
 
 ```bash
-# 1. Install Lathe in your environment
-pip install lathe-agent
+# Recommended: Isolated tool install with Astral uv
+uv tool install lathe-agent
 
-# 2. Pull local coder model via Ollama
-ollama pull hf.co/Qwen/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M
+# With model merging support:
+uv tool install "lathe-agent[merge]"
 
-# 3. Configure Hugging Face token for router & reasoning API (optional)
-export HF_TOKEN="hf_your_token_here"
-
-# 4. Launch Lathe in any project workspace
-lathe "Add JWT bearer auth & token rate limiter to auth/middleware.py"
+# Or via pipx:
+pipx install lathe-agent
 ```
-Four simple steps to initialize your environment and launch an autonomous coding session.
+
+**One-Liner Installers:**
+```bash
+# Linux / macOS
+curl -fsSL https://raw.githubusercontent.com/adityasurse/lathe/main/install.sh | bash
+
+# Windows PowerShell
+irm https://raw.githubusercontent.com/adityasurse/lathe/main/install.ps1 | iex
+```
+
+### 2. Verify Runtime with `lathe doctor`
+
+```bash
+lathe doctor
+```
+
+### 3. Launch an Autonomous Coding Session
+
+```bash
+# Interactive REPL session
+lathe
+
+# Single-shot autonomous task execution
+lathe "Add JWT bearer auth & token rate limiter to auth/middleware.py"
+
+# Dual-model planning and execution
+lathe --dual "Refactor database connection pool across all services"
+```
 
 ---
 

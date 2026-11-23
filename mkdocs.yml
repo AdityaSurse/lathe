@@ -1,0 +1,64 @@
+site_name: Lathe
+site_description: Autonomous terminal coding agent powered by dual open-source models and automated merging.
+site_author: Lathe Contributors
+site_url: https://adityasurse.github.io/lathe/
+repo_url: https://github.com/adityasurse/lathe
+repo_name: adityasurse/lathe
+
+theme:
+  name: material
+  palette:
+    # Dark mode default matching terminal palette
+    - scheme: slate
+      primary: cyan
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    # Light mode option
+    - scheme: default
+      primary: cyan
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+  - def_list
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Hugging Face Setup: huggingface-setup.md
+  - Choosing Models: choosing-models.md
+  - Dual-LLM Mode: dual-llm-mode.md
+  - Model Merging: model-merging.md
+  - Safety & Security: safety.md
+  - Configuration Reference: configuration.md
+  - Contributing: contributing.md
