@@ -148,7 +148,7 @@ class SentenceTransformersEmbedder(BaseEmbedder):
     def _get_model(self) -> Any:
         if self._model is None:
             try:
-                from sentence_transformers import SentenceTransformer  # type: ignore[import-not-found]
+                from sentence_transformers import SentenceTransformer
 
                 self._model = SentenceTransformer(self.model_name)
             except ImportError as err:

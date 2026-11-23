@@ -48,4 +48,12 @@ models/
 .DS_Store
 .vscode/
 .idea/
+
+# Testing & Coverage
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.pytest_cache/
+site/
 *.swp

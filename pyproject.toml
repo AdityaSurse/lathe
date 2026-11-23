@@ -10,7 +10,34 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 authors = [
-    { name = "Lathe Contributors" }
+    { name = "Aditya Surse and Lathe Contributors", email = "maintainers@lathe.ai" }
+]
+keywords = [
+    "ai",
+    "coding-agent",
+    "llm",
+    "developer-tools",
+    "terminal",
+    "ollama",
+    "huggingface",
+    "mergekit",
+    "dual-agent",
+    "code-generation",
+    "ast-indexing",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Code Generators",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
 ]
 dependencies = [
     "typer>=0.9.0",
@@ -27,6 +54,13 @@ dependencies = [
     "tokenizers>=0.23.3",
 ]
 
+[project.urls]
+Homepage = "https://github.com/adityasurse/lathe"
+Documentation = "https://adityasurse.github.io/lathe/"
+Repository = "https://github.com/adityasurse/lathe"
+Issues = "https://github.com/adityasurse/lathe/issues"
+Changelog = "https://github.com/adityasurse/lathe/blob/main/CHANGELOG.md"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
@@ -40,6 +74,13 @@ merge = [
     "pyyaml>=6.0",
     "psutil>=5.9.0",
 ]
+embeddings = [
+    "sentence-transformers>=2.2.0",
+]
+docs = [
+    "mkdocs>=1.6.0",
+    "mkdocs-material>=9.5.0",
+]
 
 [dependency-groups]
 dev = [
@@ -48,6 +89,10 @@ dev = [
     "pytest-cov>=5.0.0",
     "ruff>=0.4.0",
     "mypy>=1.9.0",
+]
+docs = [
+    "mkdocs>=1.6.0",
+    "mkdocs-material>=9.5.0",
 ]
 
 [project.scripts]
@@ -85,6 +130,10 @@ warn_return_any = true
 warn_unused_configs = true
 mypy_path = "src"
 packages = ["lathe"]
+
+[[tool.mypy.overrides]]
+module = ["sentence_transformers", "sentence_transformers.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
