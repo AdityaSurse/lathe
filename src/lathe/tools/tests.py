@@ -364,3 +364,16 @@ class RunTestsTool(Tool):
                 "duration_s": res.duration_s,
             },
         )
+
+
+run_tests = RunTestsTool()
+
+__all__ = [
+    "RunTestsArgs",
+    "RunTestsTool",
+    "TestRunResult",
+    "detect_test_command",
+    "parse_test_output",
+    "run_tests",
+    "run_tests_helper",
+]

@@ -72,8 +72,8 @@ DEFAULT_BLOCKLIST_PATTERNS: list[str] = [
     # dd write to raw device nodes
     r"\bdd\b.*of=/dev/(sd[a-z]|hd[a-z]|nvme[0-9]|vd[a-z]|disk[0-9]|null|zero|mem|kmem|port|\*)",
     r"\bdd\b.*of=/dev/",
-    # piped remote execution (curl | sh, wget | bash)
-    r"\b(curl|wget)\b.*\|\s*(sh|bash|zsh|dash)\b",
+    # piped remote execution (curl | sh, wget | bash, etc.)
+    r"\b(curl|wget|fetch)\b.*\|\s*(sh|bash|zsh|dash|python[0-9.]*|perl|ruby)\b",
     # force push to git repositories
     r"\bgit\s+push\s+.*(--force|-f\b|--force-with-lease)",
     # dangerous global permissive mode
