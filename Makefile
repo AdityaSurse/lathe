@@ -1,6 +1,6 @@
 export PYTHONPATH := $(CURDIR)/src:$(PYTHONPATH)
 
-.PHONY: install lint test run docs docs-build
+.PHONY: install lint test run docs docs-build manual tapes
 
 install:
 	uv sync --all-groups --all-extras
@@ -25,3 +25,14 @@ docs:
 
 docs-build:
 	uv run --no-sync mkdocs build --strict
+
+tapes:
+	@for tape in docs/manual/tapes/*.tape; do \
+		(command -v vhs >/dev/null 2>&1 && vhs "$$tape") || (/opt/homebrew/bin/vhs "$$tape" 2>/dev/null || true); \
+	done
+
+manual:
+	@for tape in docs/manual/tapes/*.tape; do \
+		(command -v vhs >/dev/null 2>&1 && vhs "$$tape") || (/opt/homebrew/bin/vhs "$$tape" 2>/dev/null || true); \
+	done
+	uv run --no-sync python scripts/build_manual.py
