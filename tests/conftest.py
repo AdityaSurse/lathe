@@ -26,6 +26,7 @@ ALIAS_ROOT_FILES = {
     "test_merge.py",
     "test_bench.py",
     "test_memory.py",
+    "test_e2e.py",
 }
 
 

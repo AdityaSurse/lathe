@@ -226,7 +226,13 @@ class ReadFileTool(Tool):
 
         width = max(len(str(total_lines)), 4)
         formatted = [f"{line_no:{width}d} | {line}" for line_no, line in selected_lines]
-        output_text = "\n".join(formatted)
+        rel_path = workspace.relpath(resolved_path)
+        body = "\n".join(formatted)
+        output_text = (
+            f"[UNTRUSTED REPOSITORY CONTENT START: {rel_path}]\n"
+            f"{body}\n"
+            f"[UNTRUSTED REPOSITORY CONTENT END: {rel_path}]"
+        )
 
         return ToolResult(
             ok=True,

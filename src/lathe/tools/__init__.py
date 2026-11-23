@@ -83,6 +83,7 @@ from lathe.tools.tests import (
     TestRunResult,
     detect_test_command,
     parse_test_output,
+    run_tests,
     run_tests_helper,
 )
 
@@ -149,6 +150,7 @@ __all__ = [
     "read_file",
     "render_compact_tree",
     "run_shell",
+    "run_tests",
     "run_tests_helper",
     "semantic_search",
     "tool",
