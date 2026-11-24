@@ -16,15 +16,20 @@ Version 1.0.0 · November 2026
    - [macOS Installation](#macos-installation)
    - [Windows Installation](#windows-installation)
    - [Linux Installation](#linux-installation)
+   - [No Graphics Card? Running on CPU](#no-graphics-card-running-on-cpu)
    - [Updating Lathe](#updating-lathe)
    - [Uninstalling Lathe](#uninstalling-lathe)
-   - [Installation Troubleshooting](#installation-troubleshooting)
-4. [Quick Start: First Session in 5 Minutes](#4-quick-start-first-session-in-5-minutes)
-5. [Core Concepts](#5-core-concepts)
+4. [Troubleshooting Guide](#4-troubleshooting-guide)
+   - [Decision Flowchart: Lathe Won't Answer](#decision-flowchart-lathe-wont-answer)
+   - [Troubleshooting Summary Table](#troubleshooting-summary-table)
+   - [Common Problems & Exact Fixes](#common-problems--exact-fixes)
+   - [Still Stuck? Diagnostic Support](#still-stuck-diagnostic-support)
+5. [Quick Start: First Session in 5 Minutes](#5-quick-start-first-session-in-5-minutes)
+6. [Core Concepts](#6-core-concepts)
    - [Model Roles: Planner, Coder, Reviewer, Router](#model-roles)
    - [Execution Modes: Single, Dual, Auto](#execution-modes)
    - [Tools, Permissions, and Checkpoints](#tools-permissions-and-checkpoints)
-6. [Feature Guide](#6-feature-guide)
+7. [Feature Guide](#7-feature-guide)
    - [Interactive Terminal REPL](#interactive-terminal-repl)
    - [One-Shot Task Execution](#one-shot-task-execution)
    - [Dual-Model Orchestration](#dual-model-orchestration)
@@ -44,19 +49,18 @@ Version 1.0.0 · November 2026
    - [GGUF Conversion & Ollama Integration](#gguf-conversion--ollama-integration)
    - [Lathe Mini-Bench Evaluation Suite](#lathe-mini-bench-evaluation-suite)
    - [Model Context Protocol (MCP) Client](#model-context-protocol-mcp-client)
-7. [Complete CLI Command Reference](#7-complete-cli-command-reference)
-8. [Complete Slash Command Reference](#8-complete-slash-command-reference)
-9. [Configuration Reference (lathe.toml)](#9-configuration-reference-lathetoml)
-10. [Choosing & Sizing Models](#10-choosing--sizing-models)
-11. [Using Google Gemma](#11-using-google-gemma)
+8. [Complete CLI Command Reference](#8-complete-cli-command-reference)
+9. [Complete Slash Command Reference](#9-complete-slash-command-reference)
+10. [Configuration Reference (lathe.toml)](#10-configuration-reference-lathetoml)
+11. [Choosing & Sizing Models](#11-choosing--sizing-models)
+12. [Using Google Gemma](#12-using-google-gemma)
    - [Why Gemma?](#why-gemma)
    - [Model Sizes & Memory Footprint](#model-sizes--memory-footprint)
    - [Hardware Sizing Guidance](#hardware-sizing-guidance)
    - [Preset Comparison: Qwen vs Gemma vs Mixed](#preset-comparison-qwen-vs-gemma-vs-mixed)
    - [Switching Presets in Lathe](#switching-presets-in-lathe)
    - [Gemma Architecture & Compatibility Features](#gemma-architecture--compatibility-features)
-12. [Safety, Threat Model & Blocked Commands](#12-safety-threat-model--blocked-commands)
-13. [Troubleshooting & Error Recovery](#13-troubleshooting--error-recovery)
+13. [Safety, Threat Model & Blocked Commands](#13-safety-threat-model--blocked-commands)
 14. [Frequently Asked Questions (FAQ)](#14-frequently-asked-questions-faq)
 15. [Keyboard Shortcuts](#15-keyboard-shortcuts)
 16. [Glossary of Terms](#16-glossary-of-terms)
@@ -241,43 +245,93 @@ ollama list
 ```
 *Expected output:* A table listing the downloaded model tags with their sizes.
 
-#### 1.7 Configure Lathe Globally
-Configure your global Lathe settings in `~/.config/lathe/lathe.toml` using the built-in preset command.
+#### 1.7 Set up your global config (required)
+Lathe requires a global configuration file that tells it which local models to use for coding, planning, and routing. The configuration file is stored at:
+- **macOS / Linux:** `~/.config/lathe/lathe.toml`
+- **Windows:** `C:\Users\<name>\.config\lathe\lathe.toml`
 
-**For 8 GB RAM (Fast Preset):**
+Initialize the configuration directory and open `lathe.toml` in macOS TextEdit:
 ```bash
-lathe models preset fast --global
+mkdir -p ~/.config/lathe
+lathe config init --path ~/.config/lathe/lathe.toml
+open -e ~/.config/lathe/lathe.toml
 ```
 
-**For 16 GB+ RAM (Qwen Team Preset):**
-```bash
-lathe models preset qwen --global
+Replace the contents of `~/.config/lathe/lathe.toml` with the configuration matching your RAM tier:
+
+**Example A: 16 GB+ RAM (Recommended)**
+```toml
+mode = "auto"
+
+[roles.coder]
+backend = "ollama"
+model = "hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M"
+context_window = 8192
+
+[roles.router]
+backend = "ollama"
+model = "hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M"
+context_window = 8192
+
+[roles.planner]
+backend = "ollama"
+model = "hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M"
+context_window = 8192
 ```
+
+**Example B: 8 GB RAM / No Graphics Card (Single Mode)**
+```toml
+mode = "single"
+
+[roles.coder]
+backend = "ollama"
+model = "hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M"
+context_window = 8192
+
+[roles.router]
+backend = "ollama"
+model = "hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M"
+context_window = 8192
+
+[roles.planner]
+backend = "ollama"
+model = "gemma4:e2b"
+context_window = 8192
+```
+
+Save the file in TextEdit (`Cmd + S`) and close TextEdit (`Cmd + Q`).
+
+> [!WARNING]
+> **Single-File Model Tag Required:**
+> Always use the single-file model tag `hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M`. Never use `hf.co/Qwen/Qwen2.5-Coder-7B-Instruct-GGUF`—the upstream Qwen repository distributes sharded split files that Ollama cannot assemble.
+
+> [!IMPORTANT]
+> **Pulling Models Matching Your Config:**
+> Ensure you have pulled the exact models matching your chosen configuration:
+> - **For Example A (16 GB):**
+>   ```bash
+>   ollama pull hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M
+>   ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
+>   ollama pull nomic-embed-text
+>   ```
+> - **For Example B (8 GB):**
+>   ```bash
+>   ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
+>   ollama pull gemma4:e2b
+>   ollama pull nomic-embed-text
+>   ```
 
 > [!TIP]
-> **Manual Configuration Fallback:**
-> If you prefer to configure manually, generate the default configuration file and open it in TextEdit:
-> ```bash
-> mkdir -p ~/.config/lathe
-> lathe config init --path ~/.config/lathe/lathe.toml
-> open -e ~/.config/lathe/lathe.toml
-> ```
-> Ensure your `[roles.coder]` and `[roles.router]` point to your downloaded Ollama models:
-> ```toml
-> [roles.coder]
-> backend = "ollama"
-> model = "hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M"
-> 
-> [roles.router]
-> backend = "ollama"
-> model = "hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M"
-> ```
+> **Project Directory Safety Guard:**
+> Always `cd` into a project repository folder before running `lathe` (e.g. `cd ~/lathe-playground`). Lathe intentionally skips indexing and limits capabilities if launched directly in your home folder (`~`) or root (`/`) to protect your personal files.
 
 **✓ Check:**
+Verify that all roles display `backend=ollama` and that diagnostic health checks pass:
 ```bash
+lathe config show
 lathe doctor
 ```
-*Expected output:* A diagnostic table where Python, Git, and Ollama Service report `[Pass]`.
+*Expected output:* `lathe config show` displays active roles pointing to your local Ollama models; `lathe doctor` reports `[Pass]` for Python, Git, and Ollama.
 
 #### 1.8 Configure Optional Speed Settings
 Speed up Ollama token generation and keep models warm in memory for 30 minutes.
@@ -435,43 +489,91 @@ ollama list
 ```
 *Expected output:* A table displaying your pulled models.
 
-#### 2.8 Configure Lathe Globally
-Apply a pre-tuned model configuration to your global settings file (`%USERPROFILE%\.config\lathe\lathe.toml`).
+#### 2.8 Set up your global config (required)
+Lathe requires a global configuration file defining the exact local models for coding, planning, and routing. On Windows, this file is located at:
+- `C:\Users\<name>\.config\lathe\lathe.toml` (or `$HOME\.config\lathe\lathe.toml`)
 
-**For 8 GB RAM (Fast Preset):**
+In Windows PowerShell, run the following commands **one line at a time** to create the folder, initialize `lathe.toml`, and open it in Notepad:
 ```powershell
-lathe models preset fast --global
+New-Item -ItemType Directory -Force -Path "$HOME\.config\lathe"
+lathe config init --path "$HOME\.config\lathe\lathe.toml"
+notepad "$HOME\.config\lathe\lathe.toml"
 ```
 
-**For 16 GB+ RAM (Qwen Team Preset):**
-```powershell
-lathe models preset qwen --global
+Replace the contents of `$HOME\.config\lathe\lathe.toml` with the configuration matching your RAM tier:
+
+**Example A: 16 GB+ RAM (Recommended)**
+```toml
+mode = "auto"
+
+[roles.coder]
+backend = "ollama"
+model = "hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M"
+context_window = 8192
+base_url = "http://127.0.0.1:11434"
+
+[roles.router]
+backend = "ollama"
+model = "hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M"
+context_window = 8192
+base_url = "http://127.0.0.1:11434"
+
+[roles.planner]
+backend = "ollama"
+model = "hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M"
+context_window = 8192
+base_url = "http://127.0.0.1:11434"
 ```
+
+**Example B: 8 GB RAM / No Graphics Card (Single Mode)**
+```toml
+mode = "single"
+
+[roles.coder]
+backend = "ollama"
+model = "hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M"
+context_window = 8192
+base_url = "http://127.0.0.1:11434"
+
+[roles.router]
+backend = "ollama"
+model = "hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M"
+context_window = 8192
+base_url = "http://127.0.0.1:11434"
+
+[roles.planner]
+backend = "ollama"
+model = "gemma4:e2b"
+context_window = 8192
+base_url = "http://127.0.0.1:11434"
+```
+
+Save the file in Notepad (`Ctrl + S`) and close Notepad.
+
+> [!WARNING]
+> **Single-File Model Tag Required:**
+> Always use the single-file model tag `hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M`. Never pull `hf.co/Qwen/Qwen2.5-Coder-7B-Instruct-GGUF` directly—upstream Qwen distributes split chunks that Ollama cannot assemble.
+
+> [!IMPORTANT]
+> **Windows Best Practices:**
+> 1. **Use normal PowerShell**: Run commands in standard Windows PowerShell (not "Run as administrator").
+> 2. **Run one command per line**: Never paste multiple commands onto a single line in PowerShell.
+> 3. **Verify Ollama daemon**: Always open the Ollama app from the Start menu before running `lathe`, and confirm the llama icon appears in the system tray.
+> 4. **Pull matching models**: Run `ollama list` and pull the models specified in your config:
+>    - *For 16 GB:* `ollama pull hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M` and `ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M`
+>    - *For 8 GB:* `ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M` and `ollama pull gemma4:e2b`
 
 > [!TIP]
-> **Manual Configuration Fallback:**
-> You can also initialize and open your global configuration in Notepad:
-> ```powershell
-> New-Item -ItemType Directory -Force -Path "$HOME\.config\lathe"
-> lathe config init --path "$HOME\.config\lathe\lathe.toml"
-> notepad "$HOME\.config\lathe\lathe.toml"
-> ```
-> Verify that the model tags in `[roles.coder]` and `[roles.router]` match your installed models:
-> ```toml
-> [roles.coder]
-> backend = "ollama"
-> model = "hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M"
-> 
-> [roles.router]
-> backend = "ollama"
-> model = "hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M"
-> ```
+> **Always Work Inside a Project Folder:**
+> Always `cd` into a project repository before starting `lathe` (e.g. `cd $HOME\lathe-playground`). Never launch Lathe from your home directory or `C:\WINDOWS\system32`.
 
 **✓ Check:**
+Verify that all roles display `backend=ollama` and diagnostics pass:
 ```powershell
+lathe config show
 lathe doctor
 ```
-*Expected output:* Diagnostic checks report `[Pass]`.
+*Expected output:* Configuration tree displays `backend=ollama` for all roles, and `lathe doctor` reports `[Pass]`.
 
 #### 2.9 Configure Optional Speed Settings
 Configure environment variables to optimize Ollama throughput and memory retention on Windows.
@@ -608,43 +710,92 @@ ollama list
 ```
 *Expected output:* List of downloaded model tags and file sizes.
 
-#### 3.7 Configure Lathe Globally
-Apply your chosen model preset to your global configuration file (`~/.config/lathe/lathe.toml`).
+#### 3.7 Set up your global config (required)
+Lathe requires a global configuration file defining the local models to use for each agent role. On Linux, this file is located at:
+- `~/.config/lathe/lathe.toml`
 
-**For 8 GB RAM (Fast Preset):**
+Initialize the configuration directory and open `lathe.toml` in `nano`:
 ```bash
-lathe models preset fast --global
+mkdir -p ~/.config/lathe
+lathe config init --path ~/.config/lathe/lathe.toml
+nano ~/.config/lathe/lathe.toml
 ```
 
-**For 16 GB+ RAM (Qwen Team Preset):**
-```bash
-lathe models preset qwen --global
+Replace the contents of `~/.config/lathe/lathe.toml` with the configuration matching your RAM tier:
+
+**Example A: 16 GB+ RAM (Recommended)**
+```toml
+mode = "auto"
+
+[roles.coder]
+backend = "ollama"
+model = "hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M"
+context_window = 8192
+
+[roles.router]
+backend = "ollama"
+model = "hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M"
+context_window = 8192
+
+[roles.planner]
+backend = "ollama"
+model = "hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M"
+context_window = 8192
 ```
+
+**Example B: 8 GB RAM / No Graphics Card (Single Mode)**
+```toml
+mode = "single"
+
+[roles.coder]
+backend = "ollama"
+model = "hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M"
+context_window = 8192
+
+[roles.router]
+backend = "ollama"
+model = "hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M"
+context_window = 8192
+
+[roles.planner]
+backend = "ollama"
+model = "gemma4:e2b"
+context_window = 8192
+```
+
+In `nano`, save the file by pressing `Ctrl + O` then `Enter`, and exit with `Ctrl + X`.
+
+> [!WARNING]
+> **Single-File Model Tag Required:**
+> Always use the single-file model tag `hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M`. Never use `hf.co/Qwen/Qwen2.5-Coder-7B-Instruct-GGUF`—upstream Qwen distributes split chunks that Ollama cannot assemble.
+
+> [!IMPORTANT]
+> **Pulling Models Matching Your Config:**
+> Ensure you have pulled the exact models configured in your TOML:
+> - **For Example A (16 GB):**
+>   ```bash
+>   ollama pull hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M
+>   ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
+>   ollama pull nomic-embed-text
+>   ```
+> - **For Example B (8 GB):**
+>   ```bash
+>   ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
+>   ollama pull gemma4:e2b
+>   ollama pull nomic-embed-text
+>   ```
 
 > [!TIP]
-> **Manual Configuration Fallback:**
-> You can also create and edit the global configuration file directly:
-> ```bash
-> mkdir -p ~/.config/lathe
-> lathe config init --path ~/.config/lathe/lathe.toml
-> nano ~/.config/lathe/lathe.toml
-> ```
-> Verify that `[roles.coder]` and `[roles.router]` specify your local Ollama models:
-> ```toml
-> [roles.coder]
-> backend = "ollama"
-> model = "hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M"
-> 
-> [roles.router]
-> backend = "ollama"
-> model = "hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M"
-> ```
+> **Project Directory Safety Guard:**
+> Always `cd` into a project repository before starting `lathe` (e.g. `cd ~/lathe-playground`). Never run Lathe directly from your home directory or `/`.
 
 **✓ Check:**
+Verify that all roles display `backend=ollama` and diagnostics pass:
 ```bash
+lathe config show
 lathe doctor
 ```
-*Expected output:* All diagnostic checks show `[Pass]`.
+*Expected output:* `lathe config show` displays active roles pointing to your local Ollama models; `lathe doctor` reports `[Pass]`.
 
 #### 3.8 Configure Optional Speed Settings
 Configure Ollama service environment variables for 30-minute model persistence and flash attention.
@@ -690,6 +841,17 @@ If you wish to use remote planning models, add your Hugging Face API key to `~/.
 echo 'export HF_TOKEN="hf_your_token_here"' >> ~/.bashrc
 source ~/.bashrc
 ```
+
+---
+
+### No Graphics Card? Running on CPU
+
+You do not need a dedicated GPU (NVIDIA, AMD, or Apple Silicon) to run Lathe. Thanks to Ollama's CPU vectorization and compact quantized GGUF models, Lathe runs cleanly on standard multi-core CPUs:
+
+- **Recommended CPU Models**: Use lightweight models such as `hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M` or `gemma4:e2b`. These occupy only ~1.2 GB of system RAM.
+- **Initial Load Latency**: On CPU, the very first response can take **30–90 seconds** while Ollama maps the weights into memory and allocates KV cache tensors. Subsequent responses stream significantly faster.
+- **Enforce Single Mode**: In your global `lathe.toml`, set `mode = "single"`. Single mode keeps only one model loaded at any time, preventing system swapping and thread contention.
+- **Optional Cloud Offload for Planning**: If you want high-capacity reasoning without local CPU strain, configure `roles.planner.backend = "hf"` with a model that has Inference Providers enabled on its Hugging Face page (such as `deepseek-ai/DeepSeek-R1` or `Qwen/Qwen2.5-Coder-32B-Instruct`). This allows free cloud inference for planning while keeping local code execution entirely on your machine.
 
 ---
 
@@ -745,23 +907,346 @@ ollama rm nomic-embed-text
 
 ---
 
-### Installation Troubleshooting
+---
 
-If you encounter an issue during installation, look up the symptom in the table below:
+<div style="page-break-before: always;"></div>
 
-| Symptom / Error | Root Cause | Solution |
-| :--- | :--- | :--- |
-| **`lathe: command not found`** or **`'lathe' is not recognized`** | The `~/.local/bin` directory (or Windows tool directory) is not in your shell's `PATH`. | Run `uv tool update-shell`, then close and reopen your terminal or PowerShell window. |
-| **`running scripts is disabled on this system`** (Windows) | Windows PowerShell restricts execution of remote scripts by default. | Run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` in PowerShell, confirm with `Y`, and retry. |
-| **`Ollama Service: Fail`** or **`Connection refused`** | The Ollama background daemon is not running. | **macOS**: Open Ollama from Applications.<br>**Windows**: Open Ollama from Start Menu.<br>**Linux**: Run `sudo systemctl start ollama`. |
-| **`sharded GGUF`** or **`model not found`** error during pull | Upstream `hf.co/Qwen/` repository distributes sharded weights that Ollama cannot assemble. | Always pull the single-file GGUF quant from bartowski: `ollama pull hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M`. |
-| **`ModuleNotFoundError`** after upgrading Python or Lathe | Broken virtual environment or missing dependency in tool cache. | Run `uv tool install --force git+https://github.com/AdityaSurse/lathe` to recreate the isolated environment. |
-| **Lathe freezes or prints `Not in a project folder` on startup** | You launched Lathe from your home directory (`~`) or root (`/`). | Lathe protects your home folder from accidental file edits. Create or `cd` into a project folder (e.g. `cd ~/lathe-playground`). |
-| **Token generation is very slow (< 5 tokens/sec)** | Model is too large for your RAM, or Ollama is swapping weights to disk. | Switch to the fast preset (`lathe models preset fast --global`), use the 1.5B/2B models, and configure speed settings (`OLLAMA_KEEP_ALIVE=30m`, `OLLAMA_FLASH_ATTENTION=1`). |
+## 4. Troubleshooting Guide
+
+When setting up or operating a local AI agent, issues typically stem from three areas: Ollama runtime connectivity, model configuration mismatch, or workspace directory guards. Use the interactive decision flowchart and diagnosis tables below to resolve any issue in seconds.
+
+### Decision Flowchart: Lathe Won't Answer
+
+Follow this sequence if Lathe appears stuck, fails to respond, or prints an error during launch:
+
+```mermaid
+flowchart TD
+    Start["Lathe Won't Answer / Stuck?"] --> Q1{"Is Ollama running?"}
+    Q1 -- No --> A1["Open Ollama app (Start Menu / Applications)<br/>or run: sudo systemctl start ollama"]
+    Q1 -- Yes --> Q2{"Is the model pulled?"}
+    
+    Q2 -- No --> A2["Check: ollama list<br/>Pull missing model: ollama pull &lt;model-name&gt;"]
+    Q2 -- Yes --> Q3{"Is global config pointing to model?"}
+    
+    Q3 -- No --> A3["Check: lathe config show<br/>Update ~/.config/lathe/lathe.toml"]
+    Q3 -- Yes --> Q4{"Are you in a project folder?"}
+    
+    Q4 -- No --> A4["Lathe blocks home / system32 folders.<br/>cd into a project folder (e.g. cd ~/lathe-playground)"]
+    Q4 -- Yes --> Q5["Wait for First Load<br/>CPU / first inference can take 30–90s<br/>Check: ollama ps"]
+```
 
 ---
 
-## 4. Quick Start: First Session in 5 Minutes
+### Troubleshooting Summary Table
+
+| # | Symptom / Error | Root Cause | Solution Summary |
+| :-: | :--- | :--- | :--- |
+| **1** | Global config warning in `lathe doctor`, or wrong models in banner | `lathe.toml` does not exist or points to wrong models | Initialize `lathe.toml` with `lathe config init` and verify with `lathe config show`. |
+| **2** | `Failed to connect to Ollama at http://localhost:11434` | Ollama daemon closed or IPv6/IPv4 binding issue on Windows | Launch Ollama app; on Windows set `base_url = "http://127.0.0.1:11434"` or `setx OLLAMA_HOST "127.0.0.1:11434"`. |
+| **3** | `ollama serve`: `Only one usage of each socket address is permitted` | Ollama is already running in background | Harmless! Do not run `ollama serve`; launch `lathe` directly. |
+| **4** | `lathe doctor` shows `Ollama Service: Warning — Not reachable` | Ollama desktop application is closed | Open Ollama from Start Menu / Applications; enable "Start at login". |
+| **5** | `Error: Unknown model preset 'fast'` | Preset `'fast'` does not exist in Lathe | Use valid presets: `qwen`, `gemma`, `mixed`, or set roles manually. |
+| **6** | Model not found / not pulled | Configured model ID has not been downloaded | Run `ollama list`, then `ollama pull <model-id>`. |
+| **7** | `This tag is a sharded GGUF` when pulling | Upstream repository split weights into un-assemblable chunks | Pull single-file quant: `hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M`. |
+| **8** | `HF_TOKEN` shows Warning in `lathe doctor` | No Hugging Face token detected in environment | Completely optional! Safely ignore unless using `backend = "hf"`. |
+| **9** | Unauthenticated HF requests or symlinks warning | Standard informational warnings from `huggingface_hub` | Harmless; on Windows set `HF_HUB_DISABLE_SYMLINKS_WARNING=1`. |
+| **10** | Ollama stopped working after changing environment variables | Misconfigured environment settings | Reset variables with `[Environment]::SetEnvironmentVariable(...)` and restart Ollama. |
+| **11** | No answer for minutes / very slow throughput (< 5 tps) | Running large model on CPU without GPU, or swapping | Use 1.5B model, `mode = "single"`, `context_window = 8192`; wait 30–90s for first load. |
+| **12** | Lathe freezes or exits when started | Launched inside home directory (`~`) or `C:\WINDOWS\system32` | Lathe safety guard protects user files; `cd` into a project folder first. |
+| **13** | Status bar shows `git: no-git` | Current directory is not a Git repository | Run `git init -b main` and make an initial commit to enable `/undo`. |
+| **14** | `'lathe' is not recognized` / `command not found` | `uv` tool path is missing from shell `PATH` | Run `uv tool update-shell` and restart terminal/PowerShell. |
+| **15** | `running scripts is disabled on this system` (Windows) | PowerShell execution policy restricts scripts | Run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` and answer `Y`. |
+| **16** | `ModuleNotFoundError` (e.g. numpy or pydantic) | Corrupted virtual environment in tool cache | Reinstall tool cleanly: `uv tool install --force lathe-agent`. |
+| **17** | PowerShell: `A positional parameter cannot be found` | Multi-line script pasted onto a single line | Run commands one line at a time in Windows PowerShell. |
+| **18** | Lathe shows an older version string | Cached outdated wheel in `uv` cache | Run `uv tool install --force lathe-agent` and check `lathe --version`. |
+
+---
+
+### Diagnostic Health Checks
+
+Always run `lathe doctor` first to pinpoint the exact failure point:
+
+![Lathe Doctor Diagnostics](../../assets/manual/images/doctor.png)
+
+```bash
+lathe doctor
+lathe config show
+```
+
+---
+
+### Common Problems & Exact Fixes
+
+#### 4.1 Global Config Warning in `lathe doctor`, or Wrong Models in Banner
+**Cause:** Lathe could not locate a global `lathe.toml` in your user config folder, or the file has invalid TOML syntax.
+
+**Fix:** Create the folder and initialize a fresh configuration file:
+- **Windows (PowerShell — run one command per line):**
+  ```powershell
+  New-Item -ItemType Directory -Force -Path "$HOME\.config\lathe"
+  lathe config init --path "$HOME\.config\lathe\lathe.toml"
+  notepad "$HOME\.config\lathe\lathe.toml"
+  lathe config show
+  ```
+- **macOS / Linux:**
+  ```bash
+  mkdir -p ~/.config/lathe
+  lathe config init --path ~/.config/lathe/lathe.toml
+  open -e ~/.config/lathe/lathe.toml   # on Linux: nano ~/.config/lathe/lathe.toml
+  lathe config show
+  ```
+
+#### 4.2 "Agent Stopped: Failed to connect to Ollama at http://localhost:11434"
+**Cause:** The Ollama background process is not active, or Windows networking failed to resolve `localhost` over IPv6.
+
+**Fix:**
+1. Open the Ollama app from your Applications folder (macOS) or Windows Start Menu. Wait 10 seconds.
+2. Confirm the Ollama HTTP API responds:
+- **Windows (PowerShell):**
+  ```powershell
+  curl.exe http://127.0.0.1:11434/api/tags
+  ollama ps
+  ollama list
+  ```
+  If connection issues persist on Windows, force IPv4 binding in your environment and add `base_url = "http://127.0.0.1:11434"` to every role in `$HOME\.config\lathe\lathe.toml`:
+  ```powershell
+  setx OLLAMA_HOST "127.0.0.1:11434"
+  ```
+  Close and reopen PowerShell, then run `lathe`.
+- **macOS / Linux:**
+  ```bash
+  curl http://127.0.0.1:11434/api/tags
+  ollama ps
+  ollama list
+  lathe doctor
+  ```
+
+#### 4.3 `ollama serve` says "Only one usage of each socket address is normally permitted"
+**Cause:** You executed `ollama serve` while the Ollama desktop application or system service was already running in the background.
+
+**Fix:** This message confirms that Ollama is **already running properly**! You do not need to run `ollama serve`. Leave Ollama running in the background and launch `lathe` directly.
+
+#### 4.4 `lathe doctor` shows "Ollama Service: Warning — Not reachable"
+**Cause:** The Ollama background service is not running.
+
+**Fix:**
+- **macOS:** Open Ollama from your `/Applications` folder. Confirm the llama icon appears in the top menu bar.
+- **Windows:** Launch Ollama from the Windows Start menu. Confirm the llama icon appears in the system tray (bottom-right).
+- **Linux:** Start the systemd unit:
+  ```bash
+  sudo systemctl start ollama
+  systemctl status ollama --no-pager
+  ```
+*Tip:* Right-click the Ollama llama icon in your menu bar or system tray and enable **Start at login** so Ollama is always ready when your machine boots.
+
+#### 4.5 "Error: Unknown model preset 'fast'"
+**Cause:** The preset `'fast'` does not exist in Lathe. Built-in presets are strictly: `'qwen'`, `'gemma'`, and `'mixed'`.
+
+**Fix:** Apply a supported preset, or configure roles directly in `lathe.toml`:
+- **Windows (PowerShell):**
+  ```powershell
+  lathe models preset qwen --global
+  ```
+- **macOS / Linux:**
+  ```bash
+  lathe models preset qwen --global
+  ```
+
+#### 4.6 Model Not Found / Not Pulled
+**Cause:** `lathe.toml` references a model that has not yet been downloaded to local Ollama storage.
+
+**Fix:** List installed models and pull the exact missing tag:
+- **Windows (PowerShell) / macOS / Linux:**
+  ```bash
+  ollama list
+  ollama pull hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M
+  ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M
+  ollama pull nomic-embed-text
+  ```
+
+#### 4.7 "This tag is a sharded GGUF" when Pulling
+**Cause:** The official `hf.co/Qwen/` repository distributes multi-part split GGUF files that Ollama cannot assemble.
+
+**Fix:** Use the verified single-file quant from bartowski:
+- **Windows (PowerShell) / macOS / Linux:**
+  ```bash
+  ollama pull hf.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M
+  ```
+
+#### 4.8 `HF_TOKEN` Shows Warning in `lathe doctor`
+**Cause:** `HF_TOKEN` is not defined in your environment variables.
+
+**Fix:** If you are using local Ollama models (`backend = "ollama"`), `HF_TOKEN` is **100% optional** and you can safely ignore this warning. Only set it if you choose `backend = "hf"` for remote planning:
+- **Windows (PowerShell):**
+  ```powershell
+  setx HF_TOKEN "hf_your_real_token"
+  ```
+  *(Close and reopen PowerShell).*
+- **macOS / Linux:**
+  ```bash
+  echo 'export HF_TOKEN="hf_your_real_token"' >> ~/.zshrc   # on Linux: ~/.bashrc
+  source ~/.zshrc
+  ```
+> [!CAUTION]
+> Never share, screenshot, or commit your `HF_TOKEN`. If accidentally exposed, revoke it immediately at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens).
+
+#### 4.9 "You are sending unauthenticated requests to the HF Hub" & Symlink Warnings
+**Cause:** Harmless notices output by Hugging Face libraries when downloading local tokenizers or running on Windows filesystems without developer symlinks enabled.
+
+**Fix:** These warnings do not affect operation. To silence the Windows symlink message:
+- **Windows (PowerShell):**
+  ```powershell
+  setx HF_HUB_DISABLE_SYMLINKS_WARNING 1
+  ```
+  *(Close and reopen PowerShell).*
+
+#### 4.10 Ollama Stopped Working After Changing Settings
+**Cause:** Invalid environment flags (e.g. `OLLAMA_MAX_LOADED_MODELS` or incorrect memory limits) caused the Ollama server process to fail on launch.
+
+**Fix:** Reset user environment variables and restart the Ollama app:
+- **Windows (PowerShell):**
+  ```powershell
+  [Environment]::SetEnvironmentVariable("OLLAMA_MAX_LOADED_MODELS", $null, "User")
+  [Environment]::SetEnvironmentVariable("OLLAMA_KEEP_ALIVE", $null, "User")
+  [Environment]::SetEnvironmentVariable("OLLAMA_FLASH_ATTENTION", $null, "User")
+  ```
+  Quit Ollama from the system tray icon, relaunch Ollama from the Start Menu, and reopen PowerShell.
+- **macOS:**
+  ```bash
+  launchctl unsetenv OLLAMA_KEEP_ALIVE
+  launchctl unsetenv OLLAMA_FLASH_ATTENTION
+  ```
+  Quit Ollama from the top menu bar icon and relaunch it from `/Applications`.
+- **Linux:**
+  ```bash
+  sudo systemctl revert ollama
+  sudo systemctl restart ollama
+  ```
+
+#### 4.11 No Answer for Minutes / Very Slow Generation (< 5 tokens/sec)
+**Cause:** Running a 7B+ model on a machine without sufficient RAM or GPU acceleration, forcing OS memory paging (disk swap), or Ollama is compiling layers on CPU for the first time.
+
+**Fix:**
+1. Check CPU load and model status in a secondary terminal:
+   ```bash
+   ollama ps
+   ```
+   On CPU, the very first generation can take 30–90 seconds while weights load into RAM. Subsequent tokens stream faster.
+2. If throughput remains under 5 tokens/sec, switch your coder to the lightweight 1.5B model and enforce `mode = "single"` in `~/.config/lathe/lathe.toml`:
+   ```toml
+   mode = "single"
+
+   [roles.coder]
+   backend = "ollama"
+   model = "hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M"
+   context_window = 8192
+   ```
+3. Close memory-intensive background apps (such as heavy web browsers or video editors).
+
+#### 4.12 Lathe Freezes When Started (Home Directory or System32 Guard)
+**Cause:** You launched `lathe` from your home directory (`~`, `C:\Users\<username>`) or `C:\WINDOWS\system32`.
+
+**Fix:** Lathe enforces a strict safety guard preventing repository symbol indexing across personal or operating system directories. Always navigate into a dedicated project folder:
+- **Windows (PowerShell):**
+  ```powershell
+  mkdir $HOME\lathe-playground
+  cd $HOME\lathe-playground
+  lathe
+  ```
+- **macOS / Linux:**
+  ```bash
+  mkdir -p ~/lathe-playground
+  cd ~/lathe-playground
+  lathe
+  ```
+
+#### 4.13 Status Bar Shows "git: no-git"
+**Cause:** The current folder is not a Git repository. Git shadow checkpoints and the `/undo` command are disabled.
+
+**Fix:** Initialize a Git repository in your project directory:
+- **Windows (PowerShell) / macOS / Linux:**
+  ```bash
+  git init -b main
+  git add .
+  git -c user.name="Developer" -c user.email="dev@example.com" commit -m "initial commit"
+  lathe
+  ```
+
+#### 4.14 "lathe is not recognized" / "command not found"
+**Cause:** The directory where `uv tool` installed the `lathe` executable is not in your current shell's `PATH`.
+
+**Fix:** Update your shell profile and restart your terminal:
+- **Windows (PowerShell):**
+  ```powershell
+  uv tool update-shell
+  ```
+  *(Close and reopen PowerShell).*
+- **macOS / Linux:**
+  ```bash
+  uv tool update-shell
+  ```
+  *(Close and reopen your Terminal).*
+
+#### 4.15 "running scripts is disabled on this system" (Windows)
+**Cause:** Windows PowerShell prevents executing downloaded scripts under the default `Restricted` execution policy.
+
+**Fix:** Set your user execution policy to `RemoteSigned`:
+- **Windows (PowerShell):**
+  ```powershell
+  Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+  ```
+  Type `Y` and press `Enter`. Then rerun your installation command.
+
+#### 4.16 `ModuleNotFoundError` (e.g. numpy or pydantic)
+**Cause:** A corrupted tool environment or mismatched Python installation in the `uv` cache.
+
+**Fix:** Recreate the isolated Lathe environment from scratch:
+- **Windows (PowerShell) / macOS / Linux:**
+  ```bash
+  uv tool install --force git+https://github.com/AdityaSurse/lathe
+  lathe --version
+  ```
+
+#### 4.17 PowerShell Error "A positional parameter cannot be found"
+**Cause:** Multiple PowerShell commands were pasted simultaneously on a single line, or a multi-line Unix shell script was pasted into PowerShell.
+
+**Fix:** Run commands **one line at a time** in PowerShell, or join distinct commands using a semicolon (`;`):
+```powershell
+# Correct syntax:
+New-Item -ItemType Directory -Force -Path "$HOME\.config\lathe" ; lathe config init --path "$HOME\.config\lathe\lathe.toml"
+```
+
+#### 4.18 Lathe Shows an Old Version (e.g. v1.0.0)
+**Cause:** Your local tool environment has an older release cached.
+
+**Fix:** Upgrade to the latest build from the repository:
+- **Windows (PowerShell) / macOS / Linux:**
+  ```bash
+  uv tool install --force git+https://github.com/AdityaSurse/lathe
+  lathe --version
+  ```
+
+---
+
+### Still Stuck? Diagnostic Support
+
+If you have tried the steps above and Lathe is still unable to run or answer:
+
+> [!TIP]
+> **Reporting an Issue:**
+> 1. Run the two core diagnostic commands:
+>    ```bash
+>    lathe doctor
+>    lathe config show
+>    ```
+> 2. Take a screenshot or copy the terminal output. **Ensure any sensitive API tokens or paths are obscured or masked.**
+> 3. Open an issue on GitHub: [github.com/AdityaSurse/lathe/issues](https://github.com/AdityaSurse/lathe/issues) describing your OS version, available RAM, and the diagnostics output.
+
+---
+
+---
+
+## 5. Quick Start: First Session in 5 Minutes
 
 Navigate to any existing code repository or create a clean testing folder:
 
@@ -816,7 +1301,7 @@ Lathe restores your working directory to the exact state captured in checkpoint 
 
 ---
 
-## 5. Core Concepts
+## 6. Core Concepts
 
 ### Model Roles
 
@@ -868,7 +1353,7 @@ Switch modes on the fly using `/mode single`, `/mode dual`, or `/mode auto`.
 
 ---
 
-## 6. Feature Guide
+## 7. Feature Guide
 
 ### Interactive Terminal REPL
 
@@ -1175,7 +1660,7 @@ lathe models use "qwen2.5-coder:7b"   # Set model as active coder in lathe.toml
 
 ---
 
-## 7. Complete CLI Command Reference
+## 8. Complete CLI Command Reference
 
 ### Root CLI Options (`lathe [OPTIONS] [COMMAND]`)
 
@@ -1274,7 +1759,7 @@ lathe merge gguf <NAME>      # Convert to GGUF, quantize, and import into Ollama
 
 ---
 
-## 8. Complete Slash Command Reference
+## 9. Complete Slash Command Reference
 
 All slash commands available inside the interactive REPL:
 
@@ -1297,7 +1782,7 @@ All slash commands available inside the interactive REPL:
 
 ---
 
-## 9. Configuration Reference (lathe.toml)
+## 10. Configuration Reference (lathe.toml)
 
 Lathe uses a two-level TOML configuration architecture:
 1. **Global Configuration**: `~/.config/lathe/lathe.toml` (applies to all projects).
@@ -1436,7 +1921,7 @@ context_window = 32768
 
 ---
 
-## 10. Choosing & Sizing Models
+## 11. Choosing & Sizing Models
 
 ### Hardware Tiers & Sizing
 
@@ -1475,11 +1960,11 @@ Always select repositories that provide **single-file quantizations** up to 14B 
 
 ---
 
-## 11. Using Google Gemma
+## 12. Using Google Gemma
 
 Lathe provides native first-class support for Google Gemma models (`gemma4:e2b`, `gemma4:e4b`) alongside Qwen. With the built-in preset system, switching your entire developer environment between Qwen and Gemma takes a single command.
 
-![Lathe Model Presets](assets/manual/images/models_presets.png)
+![Lathe Model Presets](../../assets/manual/images/models_presets.png)
 
 ### Why Gemma?
 - **Open Weights from Google**: State-of-the-art reasoning and code comprehension built on Google DeepMind research.
@@ -1556,7 +2041,7 @@ lathe models preset qwen
 ```
 
 #### 4. Interactive Gemma Session
-![Gemma Session](assets/manual/images/gemma_session.png)
+![Gemma Session](../../assets/manual/images/gemma_session.png)
 
 ---
 
@@ -1577,7 +2062,7 @@ Lathe includes built-in compatibility adaptations specifically tuned for Gemma:
 
 ---
 
-## 12. Safety, Threat Model & Blocked Commands
+## 13. Safety, Threat Model & Blocked Commands
 
 ### What Lathe Will NEVER Do
 1. **Never send telemetry**: Lathe transmits zero telemetry, code samples, or analytics to any remote server.
@@ -1607,22 +2092,7 @@ Every write operation creates a Git shadow commit before applying changes. If a 
 1. Type `/undo` to revert the last action.
 2. Or run `/checkpoints` to view all saved restore points and `/restore <n>` to roll back to any point in time.
 
----
 
-## 13. Troubleshooting & Error Recovery
-
-| Issue / Error | Root Cause | Solution |
-| :--- | :--- | :--- |
-| **`Connection refused` on http://localhost:11434** | Ollama daemon is not running in background. | Run `ollama serve` in a separate terminal or launch Ollama app. |
-| **`Model '...' not found`** | Requested model has not been pulled to local Ollama cache. | Run `lathe models pull <model_id>` or `ollama pull <model_id>`. |
-| **`Secret '...' found in TOML file`** | You added `HF_TOKEN` or an API key to `lathe.toml`. | Remove token from `lathe.toml`. Export `export HF_TOKEN="hf_..."` or add to `.env`. |
-| **`Role configured with backend='hf', but HF_TOKEN is not set`** | Planner or Coder is set to Hugging Face, but no token is detected. | Set `HF_TOKEN` in environment or `.env`, or switch role backend to `"ollama"`. |
-| **`ModuleNotFoundError` after package update** | Old binary shim pointing to outdated wheel path. | Reinstall cleanly with `uv tool install lathe-agent --force`. |
-| **Sharded GGUF download error** | Model repo split weights into multiple chunk files. | Choose a single-file quant (e.g. `hf.co/bartowski/...:Q4_K_M`). |
-| **Windows execution policy error** | PowerShell prevents script execution. | Run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`. |
-| **Slow tokens/second throughput** | Model too large for GPU VRAM, spilling into CPU swap. | Switch to a smaller quant (`Q4_K_M` instead of `Q8_0`) or a 1.5B/7B model. |
-| **Gemma template rejects `system` role** | Ollama chat template lacks native system role field. | Automatically handled by Lathe: prepends system instructions to first user message. |
-| **Gemma outputs `<think>` reasoning before JSON** | Model emits internal thinking blocks before plan. | Automatically handled by Lathe: stripped before schema validation. |
 
 ---
 
