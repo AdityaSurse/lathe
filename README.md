@@ -1,5 +1,10 @@
 <div align="center">
 
+<img src="assets/logo.svg" alt="Lathe Logo" width="128" height="128" />
+
+# Lathe
+**Turn prompts into code. Locally.**
+
 <img src="assets/banner.svg" alt="Lathe — Turn prompts into code. Locally." width="100%" />
 
 [![PyPI Version](https://img.shields.io/pypi/v/lathe-agent?style=for-the-badge&logo=pypi&logoColor=white)](https://pypi.org/project/lathe-agent/)
@@ -537,6 +542,10 @@ Install Lathe in under 2 minutes. For the complete step-by-step beginner walkthr
 
 📖 **Full step-by-step guide** → [assets/manual/Lathe-User-Manual.pdf](assets/manual/Lathe-User-Manual.pdf)
 
+> ⚙️ **First-Time Setup (Required)**: Lathe requires a global config file (`~/.config/lathe/lathe.toml` on macOS/Linux or `C:\Users\<name>\.config\lathe\lathe.toml` on Windows) specifying which models to use.  
+> Run `lathe config init --path ~/.config/lathe/lathe.toml` (or `$HOME\.config\lathe\lathe.toml` on Windows), set your models, and verify with `lathe config show`.  
+> Follow the [Global Configuration Guide in the User Manual](docs/manual/USER_MANUAL.md#set-up-your-global-config-required) for exact 8 GB and 16 GB configurations.
+
 <details>
 <summary><b>macOS</b></summary>
 
@@ -642,6 +651,22 @@ lathe "Add JWT bearer auth & token rate limiter to auth/middleware.py"
 
 # Dual-model planning and execution
 lathe --dual "Refactor database connection pool across all services"
+```
+
+---
+
+## Troubleshooting
+
+Encountering an issue? Most common setup problems (such as `Failed to connect to Ollama`, unknown presets, `HF_TOKEN` warnings, or Windows PowerShell execution policies) can be resolved in seconds.
+
+Check out the full troubleshooting guide with copy-paste commands, decision flowcharts, and root causes:
+
+👉 **[Troubleshooting Guide (Chapter 4 in User Manual)](docs/manual/USER_MANUAL.md#4-troubleshooting-guide)** | **[Download User Manual PDF](assets/manual/Lathe-User-Manual.pdf)**
+
+Quick diagnostic check:
+```bash
+lathe doctor
+lathe config show
 ```
 
 ---

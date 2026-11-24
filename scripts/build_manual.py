@@ -94,6 +94,8 @@ def resolve_image_paths(md_text: str) -> str:
             abs_target = (WORKSPACE_ROOT / rel_path[6:]).resolve()
         elif rel_path.startswith("../"):
             abs_target = (WORKSPACE_ROOT / "docs" / rel_path[3:]).resolve()
+        elif rel_path.startswith("assets/"):
+            abs_target = (WORKSPACE_ROOT / rel_path).resolve()
         else:
             abs_target = (WORKSPACE_ROOT / "docs" / "manual" / rel_path).resolve()
 
@@ -210,7 +212,6 @@ def generate_html(md_content: str, version: str) -> str:
     width: 170px;
     height: 170px;
     margin-bottom: 24px;
-    filter: drop-shadow(0 0 35px rgba(34, 211, 238, 0.4));
     border-radius: 36px;
     border: none !important;
     box-shadow: none !important;
@@ -525,7 +526,18 @@ def build_manual() -> None:
         # Navigate to HTML file
         print("Loading HTML into page...", flush=True)
         page.goto(OUTPUT_HTML.as_uri(), wait_until="load")
-        page.wait_for_timeout(1500)
+        page.evaluate("""() => {
+            return Promise.all(
+                Array.from(document.images).map(img => {
+                    if (img.complete) return Promise.resolve();
+                    return new Promise(resolve => {
+                        img.addEventListener('load', resolve);
+                        img.addEventListener('error', resolve);
+                    });
+                })
+            );
+        }""")
+        page.wait_for_timeout(1000)
         print("Rendering PDF...", flush=True)
 
         # Print PDF with headers, footers, and page numbers
